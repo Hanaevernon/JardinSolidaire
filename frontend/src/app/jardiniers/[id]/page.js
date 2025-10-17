@@ -5,37 +5,51 @@ import { useParams, useRouter } from "next/navigation";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
-// Réutiliser la même fonction utilitaire
+// Fonction utilitaire pour gérer les URLs des photos
 function getPhotoUrl(photo) {
+  // Si pas de photo, retourner une image par défaut
   if (!photo) return "/assets/default.jpg";
 
-  let p;
+  let photoPath;
 
-  // Cas tableau
+  // Cas 1: Photo est un tableau
   if (Array.isArray(photo)) {
-    p = photo[0];
+    photoPath = photo[0];
   }
-  // Cas JSON string
+  // Cas 2: Photo est une chaîne JSON (ex: '["photo1.jpg", "photo2.jpg"]')
   else if (typeof photo === "string" && photo.startsWith("[")) {
     try {
-      const arr = JSON.parse(photo);
-      p = arr[0];
-    } catch {
-      return "/assets/default.jpg";
+      const photoArray = JSON.parse(photo);
+      photoPath = Array.isArray(photoArray) ? photoArray[0] : photo;
+    } catch (error) {
+      console.error("Erreur parsing JSON des photos:", error);
+      photoPath = photo;
     }
   }
-  // Cas simple string
+  // Cas 3: Photo est une chaîne simple
   else if (typeof photo === "string") {
-    p = photo;
+    photoPath = photo;
+  }
+  // Cas 4: Autre type
+  else {
+    return "/assets/default.jpg";
   }
 
-  if (!p) return "/assets/default.jpg";
+  // Si pas de chemin valide
+  if (!photoPath || photoPath.trim() === "") {
+    return "/assets/default.jpg";
+  }
 
-  // ✅ Supprimer un éventuel "assets/" en début de chaîne
-  p = p.replace(/^assets\//, "");
+  // Si c'est déjà une URL complète (http/https)
+  if (photoPath.startsWith("http")) {
+    return photoPath;
+  }
 
-  // ✅ Retourner une URL correcte
-  return `/assets/${p}`;
+  // Nettoyer le chemin et construire l'URL
+  const cleanPath = photoPath.replace(/^\/+|assets\/+/g, "");
+  
+  // Retourner l'URL complète vers le dossier public
+  return `/assets/${cleanPath}`;
 }
 
 
@@ -55,6 +69,8 @@ export default function JardinierDetailPage() {
           return res.json();
         })
         .then((data) => {
+          console.log("Données jardinier reçues:", data);
+          console.log("Photos jardinier:", data.photos);
           setJardinier(data);
           setLoading(false);
         })
@@ -85,6 +101,10 @@ export default function JardinierDetailPage() {
           src={getPhotoUrl(jardinier.photos)}
           alt={jardinier.titre}
           className="w-32 h-32 rounded-full object-cover border-2 border-pink-600"
+          onError={(e) => {
+            console.log("Erreur chargement image:", e.target.src);
+            e.target.src = "/assets/default.jpg";
+          }}
         />
         <div>
           <h1 className="text-2xl font-bold text-green-800">{jardinier.titre}</h1>

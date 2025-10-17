@@ -7,7 +7,7 @@ export default function Jardiniers() {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow pt-20 pb-16">
-        <h1 className="text-center text-3xl font-bold">Jardiniers</h1>
+        
         <ListeJardiniers/>
       </main>
       <Footer />

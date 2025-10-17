@@ -1,20 +1,39 @@
 const express = require("express");
 const router = express.Router();
-const pool = require("../db");
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 // 🔹 GET toutes les annonces d'un propriétaire (ses jardins)
 router.get("/proprietaire/:userId", async (req, res) => {
   const { userId } = req.params;
   try {
-    const result = await pool.query(
-      `SELECT j.*, u.prenom, u.nom 
-       FROM jardin j 
-       JOIN utilisateur u ON j.id_proprietaire = u.id_utilisateur 
-       WHERE j.id_proprietaire = $1 
-       ORDER BY j.date_publication DESC`,
-      [userId]
-    );
-    res.json(result.rows);
+    const jardins = await prisma.jardin.findMany({
+      where: {
+        id_proprietaire: BigInt(userId)
+      },
+      include: {
+        utilisateur: {
+          select: {
+            prenom: true,
+            nom: true
+          }
+        }
+      },
+      orderBy: {
+        date_publication: 'desc'
+      }
+    });
+
+    // Convertir les BigInt en string pour JSON
+    const jardinsJSON = jardins.map(jardin => ({
+      ...jardin,
+      id_jardin: jardin.id_jardin.toString(),
+      id_proprietaire: jardin.id_proprietaire.toString(),
+      prenom: jardin.utilisateur.prenom,
+      nom: jardin.utilisateur.nom
+    }));
+
+    res.json(jardinsJSON);
   } catch (err) {
     console.error("❌ Erreur récupération jardins propriétaire :", err);
     res.status(500).json({ error: "Erreur serveur" });
@@ -25,16 +44,35 @@ router.get("/proprietaire/:userId", async (req, res) => {
 router.get("/jardinier/:userId", async (req, res) => {
   const { userId } = req.params;
   try {
-    // Pour les jardiniers (ami_du_vert), on pourrait récupérer leurs compétences
-    // ou créer une table spécifique pour leurs annonces de service
-    // Pour l'instant, retournons un tableau vide
-    const result = await pool.query(
-      `SELECT u.id_utilisateur, u.prenom, u.nom, u.biographie, u.telephone, u.adresse
-       FROM utilisateur u 
-       WHERE u.id_utilisateur = $1 AND u.role = 'ami_du_vert'`,
-      [userId]
-    );
-    res.json([]); // Tableau vide pour l'instant
+    // Pour les jardiniers (ami_du_vert), on récupère leurs informations et compétences
+    const jardinier = await prisma.utilisateur.findUnique({
+      where: {
+        id_utilisateur: BigInt(userId),
+        role: 'ami_du_vert'
+      },
+      include: {
+        competences: {
+          include: {
+            competence: true
+          }
+        }
+      }
+    });
+
+    if (jardinier) {
+      const jardinierJSON = {
+        id_utilisateur: jardinier.id_utilisateur.toString(),
+        prenom: jardinier.prenom,
+        nom: jardinier.nom,
+        biographie: jardinier.biographie,
+        telephone: jardinier.telephone,
+        adresse: jardinier.adresse,
+        competences: jardinier.competences.map(uc => uc.competence.nom)
+      };
+      res.json([jardinierJSON]);
+    } else {
+      res.json([]);
+    }
   } catch (err) {
     console.error("❌ Erreur récupération annonces jardinier :", err);
     res.status(500).json({ error: "Erreur serveur" });  
@@ -44,21 +82,35 @@ router.get("/jardinier/:userId", async (req, res) => {
 // 🔹 GET toutes les annonces (jardins + jardiniers)
 router.get("/", async (req, res) => {
   try {
-    // Récupérer tous les jardins
-    const jardins = await pool.query(
-      `SELECT j.*, u.prenom, u.nom, 'jardin' as type_annonce
-       FROM jardin j 
-       JOIN utilisateur u ON j.id_proprietaire = u.id_utilisateur 
-       ORDER BY j.date_publication DESC`
-    );
+    // Récupérer tous les jardins avec les informations du propriétaire
+    const jardins = await prisma.jardin.findMany({
+      include: {
+        utilisateur: {
+          select: {
+            prenom: true,
+            nom: true
+          }
+        }
+      },
+      orderBy: {
+        date_publication: 'desc'
+      }
+    });
+
+    // Convertir les jardins avec BigInt en format JSON et ajouter le type d'annonce
+    const jardinsJSON = jardins.map(jardin => ({
+      ...jardin,
+      id_jardin: jardin.id_jardin.toString(),
+      id_proprietaire: jardin.id_proprietaire.toString(),
+      prenom: jardin.utilisateur.prenom,
+      nom: jardin.utilisateur.nom,
+      type_annonce: 'jardin'
+    }));
 
     // Pour l'instant, on ne récupère que les jardins
-    // Plus tard, on pourra ajouter une table pour les annonces de services des jardiniers
-    const toutes_annonces = jardins.rows;
+    // Plus tard, on pourra ajouter les annonces de services des jardiniers
+    const toutes_annonces = jardinsJSON;
     
-    // Trier par date de publication
-    toutes_annonces.sort((a, b) => new Date(b.date_publication) - new Date(a.date_publication));
-
     res.json(toutes_annonces);
   } catch (err) {
     console.error("❌ Erreur récupération toutes annonces :", err);

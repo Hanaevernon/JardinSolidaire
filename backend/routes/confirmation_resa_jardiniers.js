@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const pool = require("../db"); // ton fichier de connexion PostgreSQL
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 // POST /api/reservation_jardiniers
 router.post("/", async (req, res) => {
@@ -16,17 +17,20 @@ router.post("/", async (req, res) => {
     const debut = `${startDate} ${startTime}`;
     const fin   = `${endDate} ${endTime}`;
 
-    // Insert dans réservation
-    const result = await pool.query(
-      `INSERT INTO reservation (id_utilisateur, id_jardin, date_reservation, statut, commentaires)
-       VALUES ($1, $2, NOW(), $3, $4)
-       RETURNING id_reservation`,
-      [id_utilisateur, id_jardin, "en_attente", `Créneau ${debut} - ${fin}`]
-    );
+    // Insert dans réservation avec Prisma
+    const reservation = await prisma.reservation.create({
+      data: {
+        id_utilisateur: BigInt(id_utilisateur),
+        id_jardin: BigInt(id_jardin),
+        date_reservation: new Date(),
+        statut: "en_attente",
+        commentaires: `Créneau ${debut} - ${fin}`
+      }
+    });
 
     res.status(201).json({
       message: "Réservation enregistrée",
-      id_reservation: result.rows[0].id_reservation,
+      id_reservation: reservation.id_reservation.toString(),
     });
 
   } catch (err) {

@@ -111,11 +111,34 @@ const Navbar = () => {
                 Ma messagerie
               </Link>
             </li>
-            <li>
-              <Link href="/reservations" className="block">
-                Réservations
-              </Link>
-            </li>
+            {/* Onglets différents selon le rôle */}
+            {user.role === "proprietaire" ? (
+              <>
+                <li>
+                  <Link href="/demandes-recues" className="block">
+                    Demandes reçues
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/mes-reservations" className="block">
+                    Mes réservations
+                  </Link>
+                </li>
+              </>
+            ) : (
+              <>
+                <li>
+                  <Link href="/mes-reservations-jardins" className="block">
+                    Mes réservations de jardins
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/mes-services" className="block">
+                    Mes services proposés
+                  </Link>
+                </li>
+              </>
+            )}
             <li>
               <Link href="/favorites" className="block">
                 Mes Favoris

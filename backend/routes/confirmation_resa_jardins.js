@@ -1,7 +1,8 @@
 // routes/confirmation_reservation_jardins.js
 const express = require("express");
 const router = express.Router();
-const pool = require("../db"); // ton db.js avec pg.Pool
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 // POST /api/confirmation_reservation_jardins
 router.post("/", async (req, res) => {
@@ -16,16 +17,25 @@ router.post("/", async (req, res) => {
     const startDateTime = new Date(`${startDate}T${startTime}:00`);
     const endDateTime = new Date(`${endDate}T${endTime}:00`);
 
-    const result = await pool.query(
-      `INSERT INTO reservation (id_utilisateur, id_jardin, date_reservation, statut, commentaires)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING *`,
-      [id_utilisateur, id_jardin, startDateTime, "en_attente", "Réservé via confirmation_reservation_jardins"]
-    );
+    const reservation = await prisma.reservation.create({
+      data: {
+        id_utilisateur: BigInt(id_utilisateur),
+        id_jardin: BigInt(id_jardin),
+        date_reservation: startDateTime,
+        statut: "en_attente",
+        commentaires: "Réservé via confirmation_reservation_jardins"
+      }
+    });
 
     res.status(201).json({
       message: "✅ Réservation confirmée",
-      reservation: result.rows[0],
+      reservation: {
+        ...reservation,
+        id_reservation: reservation.id_reservation.toString(),
+        id_utilisateur: reservation.id_utilisateur.toString(),
+        id_jardin: reservation.id_jardin.toString(),
+        id_disponibilite: reservation.id_disponibilite?.toString() || null
+      },
     });
   } catch (err) {
     console.error("❌ Erreur confirmation réservation :", err);

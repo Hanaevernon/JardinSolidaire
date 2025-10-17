@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const pool = require("../db");
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 router.post("/", async (req, res) => {
   const { email, password } = req.body;
@@ -10,8 +11,9 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    const result = await pool.query("SELECT * FROM utilisateur WHERE email = $1", [email]);
-    const user = result.rows[0];
+    const user = await prisma.utilisateur.findUnique({
+      where: { email: email }
+    });
 
     if (!user || user.mot_de_passe !== password) {
       return res.status(401).json({ error: "Identifiant ou mot de passe incorrect." });
@@ -20,7 +22,7 @@ router.post("/", async (req, res) => {
     res.status(200).json({
       message: "Connexion réussie !",
       user: {
-        id_utilisateur: user.id_utilisateur,
+        id_utilisateur: user.id_utilisateur.toString(),
         prenom: user.prenom,
         nom: user.nom,
         email: user.email,

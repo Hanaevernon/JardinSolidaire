@@ -1,18 +1,18 @@
-generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["clientExtensions"]
-  output   = "../node_modules/.prisma/client"
-}
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-generator seed {
-  provider = "node"
-  output   = "../prisma/seed.js"
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model avis {
@@ -71,6 +71,23 @@ model jardin {
   reservation      reservation[]
 }
 
+/// Table pour les annonces de jardiniers (ami_du_vert)
+model jardiniers {
+  id_jardinier      BigInt    @id @default(autoincrement())
+  id_utilisateur    BigInt
+  titre             String?
+  description       String?
+  localisation      String?
+  disponibilites    String?
+  competences       String?
+  photos            Json?     @db.Json
+  date_creation     DateTime? @default(now()) @db.Timestamptz(6)
+  date_modification DateTime? @db.Timestamptz(6)
+
+  // Relations
+  utilisateur       utilisateur @relation(fields: [id_utilisateur], references: [id_utilisateur], onDelete: NoAction, onUpdate: NoAction)
+}
+
 model messagerie {
   id_message                                          BigInt       @id @default(autoincrement())
   id_envoyeur                                         BigInt?
@@ -115,6 +132,7 @@ model utilisateur {
   avis                                               avis[]
   heurescumul_es                                     heurescumul_es[]
   jardin                                             jardin?           // 🔧 un seul jardin maximum
+  jardiniers                                         jardiniers[]      // 🔧 annonces de jardinier
   messagerie_messagerie_id_destinataireToutilisateur messagerie[]     @relation("messagerie_id_destinataireToutilisateur")
   messagerie_messagerie_id_envoyeurToutilisateur     messagerie[]     @relation("messagerie_id_envoyeurToutilisateur")
   reservation                                        reservation[]

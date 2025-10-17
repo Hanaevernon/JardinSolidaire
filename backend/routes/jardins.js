@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const pool = require("../db");
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 const multer = require("multer");
 const path = require("path");
 
@@ -21,8 +22,16 @@ const upload = multer({ storage });
 // 🔹 GET tous les jardins
 router.get("/", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM jardin");
-    res.json(result.rows);
+    const jardins = await prisma.jardin.findMany();
+    
+    // Convertir les BigInt en string pour JSON
+    const jardinsJSON = jardins.map(jardin => ({
+      ...jardin,
+      id_jardin: jardin.id_jardin.toString(),
+      id_proprietaire: jardin.id_proprietaire.toString()
+    }));
+    
+    res.json(jardinsJSON);
   } catch (err) {
     console.error("Erreur récupération jardins :", err);
     res.status(500).json({ error: "Erreur serveur" });
@@ -33,11 +42,22 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await pool.query("SELECT * FROM jardin WHERE id_jardin = $1", [id]);
-    if (result.rows.length === 0) {
+    const jardin = await prisma.jardin.findUnique({
+      where: { id_jardin: BigInt(id) }
+    });
+    
+    if (!jardin) {
       return res.status(404).json({ error: "Jardin non trouvé" });
     }
-    res.json(result.rows[0]);
+
+    // Convertir les BigInt en string pour JSON
+    const jardinJSON = {
+      ...jardin,
+      id_jardin: jardin.id_jardin.toString(),
+      id_proprietaire: jardin.id_proprietaire.toString()
+    };
+    
+    res.json(jardinJSON);
   } catch (err) {
     console.error("Erreur récupération jardin par ID :", err);
     res.status(500).json({ error: "Erreur serveur" });
@@ -60,24 +80,29 @@ router.post("/", upload.array("photos", 5), async (req, res) => {
 
     const photos = req.files.map((file) => `/uploads/${file.filename}`);
 
-    const result = await pool.query(
-      `INSERT INTO jardin 
-       (id_proprietaire, titre, description, adresse, superficie, type, besoins, photos, date_publication, statut) 
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW(),'disponible')
-       RETURNING *`,
-      [
-        id_proprietaire,
+    const jardin = await prisma.jardin.create({
+      data: {
+        id_proprietaire: BigInt(id_proprietaire),
         titre,
         description,
         adresse,
-        superficie,
+        superficie: superficie ? parseFloat(superficie) : null,
         type,
         besoins,
-        JSON.stringify(photos),
-      ]
-    );
+        photos: photos,
+        date_publication: new Date(),
+        statut: 'disponible'
+      }
+    });
 
-    res.status(201).json(result.rows[0]);
+    // Convertir les BigInt en string pour JSON
+    const jardinJSON = {
+      ...jardin,
+      id_jardin: jardin.id_jardin.toString(),
+      id_proprietaire: jardin.id_proprietaire.toString()
+    };
+
+    res.status(201).json(jardinJSON);
   } catch (err) {
     console.error("❌ Erreur ajout jardin :", err);
     res.status(500).json({ error: "Erreur serveur" });
@@ -105,35 +130,28 @@ router.put("/:id", upload.array("photos", 5), async (req, res) => {
       photosFinales = [...photosFinales, ...nouvellesPhotos];
     }
 
-    const result = await pool.query(
-      `UPDATE jardin
-       SET titre = $1,
-           description = $2,
-           adresse = $3,
-           superficie = $4,
-           type = $5,
-           besoins = $6,
-           photos = $7,
-           date_publication = NOW()
-       WHERE id_jardin = $8
-       RETURNING *`,
-      [
+    const jardin = await prisma.jardin.update({
+      where: { id_jardin: BigInt(id) },
+      data: {
         titre,
         description,
         adresse,
-        superficie || null,
-        type || null,
-        besoins || null,
-        JSON.stringify(photosFinales),
-        id,
-      ]
-    );
+        superficie: superficie ? parseFloat(superficie) : null,
+        type: type || null,
+        besoins: besoins || null,
+        photos: photosFinales,
+        date_publication: new Date()
+      }
+    });
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: "Jardin introuvable" });
-    }
+    // Convertir les BigInt en string pour JSON
+    const jardinJSON = {
+      ...jardin,
+      id_jardin: jardin.id_jardin.toString(),
+      id_proprietaire: jardin.id_proprietaire.toString()
+    };
 
-    res.json(result.rows[0]);
+    res.json(jardinJSON);
   } catch (err) {
     console.error("❌ Erreur modification jardin :", err);
     res.status(500).json({ error: "Erreur serveur" });
@@ -144,12 +162,15 @@ router.put("/:id", upload.array("photos", 5), async (req, res) => {
 router.delete("/:id", async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await pool.query("DELETE FROM jardin WHERE id_jardin = $1 RETURNING *", [id]);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: "Jardin introuvable" });
-    }
+    const jardin = await prisma.jardin.delete({
+      where: { id_jardin: BigInt(id) }
+    });
+    
     res.json({ message: "Jardin supprimé avec succès" });
   } catch (err) {
+    if (err.code === 'P2025') {
+      return res.status(404).json({ error: "Jardin introuvable" });
+    }
     console.error("❌ Erreur suppression jardin :", err);
     res.status(500).json({ error: "Erreur serveur" });
   }

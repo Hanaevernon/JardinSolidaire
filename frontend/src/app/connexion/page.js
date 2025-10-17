@@ -66,7 +66,7 @@ export default function Connexion() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Adresse e-mail"
             required
-            className="w-full border-2 border-green-500 rounded-lg px-4 py-2"
+            className="w-full border-2 border-green-500 rounded-lg px-4 py-2 text-gray-700"
           />
 
           <div className="relative">
@@ -77,7 +77,7 @@ export default function Connexion() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Mot de passe"
               required
-              className="w-full border-2 border-green-500 rounded-lg px-4 py-2 pr-20"
+              className="w-full border-2 border-green-500 rounded-lg px-4 py-2 pr-20 text-gray-700"
             />
             <button
               type="button"

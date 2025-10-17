@@ -1,7 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-module.exports = async function seedJardin() {
+ export default async function seedJardin() {
   const lucas = await prisma.utilisateur.findUnique({ where: { email: 'lucas@example.com' } });
   const hugo  = await prisma.utilisateur.findUnique({ where: { email: 'hugo@example.com' } });
 

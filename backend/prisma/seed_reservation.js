@@ -1,7 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-module.exports = async function seedReservation() {
+ export default async function seedReservation() {
   const utilisateurLucas = await prisma.utilisateur.findUnique({ where: { email: 'lucas@example.com' } });
   const utilisateurHugo  = await prisma.utilisateur.findUnique({ where: { email: 'hugo@example.com' } });
 

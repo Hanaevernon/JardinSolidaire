@@ -1,7 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-module.exports = async function seedUtilisateur() {
+ export default async function seedUtilisateur() {
   await prisma.utilisateur.createMany({
     data: [
       {

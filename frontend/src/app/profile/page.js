@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faUser,
@@ -41,24 +42,45 @@ const ProfilePage = () => {
       setUserDetails(userData);
 
       // Récupérer les annonces selon le rôle
+      console.log("Rôle de l'utilisateur:", userData.role);
       if (userData.role === "proprietaire") {
         const annoncesResponse = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/annonces/proprietaire/${userId}`
         );
         const annoncesData = await annoncesResponse.json();
+        console.log("Annonces propriétaire reçues:", annoncesData);
         setAnnonces(Array.isArray(annoncesData) ? annoncesData : []);
       } else if (userData.role === "ami_du_vert") {
-        const annoncesResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/annonces/jardinier/${userId}`
-        );
-        const annoncesData = await annoncesResponse.json();
-        setAnnonces(Array.isArray(annoncesData) ? annoncesData : []);
+        // Pour les amis du vert, on peut récupérer leurs compétences à la place
+        try {
+          const competencesResponse = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/utilisateur/${userId}/competences`
+          );
+          if (competencesResponse.ok) {
+            const competencesData = await competencesResponse.json();
+            console.log("Compétences ami du vert reçues:", competencesData);
+            setAnnonces(Array.isArray(competencesData) ? competencesData : []);
+          } else {
+            // Si pas de route compétences, on garde un tableau vide pour l'instant
+            setAnnonces([]);
+          }
+        } catch (error) {
+          console.log("Pas de compétences définies, tableau vide");
+          setAnnonces([]);
+        }
       }
 
-      // Récupérer les réservations
-      const reservationsResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/reservations/utilisateur/${userId}`
-      );
+      // Récupérer les réservations selon le rôle
+      let reservationsUrl;
+      if (userData.role === "proprietaire") {
+        // Pour les propriétaires : récupérer les demandes reçues
+        reservationsUrl = `${process.env.NEXT_PUBLIC_API_URL}/reservations/proprietaire/${userId}`;
+      } else {
+        // Pour les jardiniers : récupérer leurs propres réservations
+        reservationsUrl = `${process.env.NEXT_PUBLIC_API_URL}/reservations/utilisateur/${userId}`;
+      }
+      
+      const reservationsResponse = await fetch(reservationsUrl);
       const reservationsData = await reservationsResponse.json();
       setReservations(Array.isArray(reservationsData) ? reservationsData : []);
 
@@ -113,14 +135,16 @@ const ProfilePage = () => {
                 </p>
                 <div className="flex items-center mt-2 text-gray-600">
                   <FontAwesomeIcon icon={faMapMarkerAlt} className="mr-2" />
-                  <span>{userDetails.ville || "Ville non renseignée"}</span>
+                  <span>{userDetails.adresse || "Adresse non renseignée"}</span>
                 </div>
               </div>
             </div>
-            <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center">
-              <FontAwesomeIcon icon={faEdit} className="mr-2" />
-              Modifier le profil
-            </button>
+            <Link href="/profile/edit">
+              <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center">
+                <FontAwesomeIcon icon={faEdit} className="mr-2" />
+                Modifier le profil
+              </button>
+            </Link>
           </div>
         </div>
 
@@ -146,7 +170,7 @@ const ProfilePage = () => {
                 <FontAwesomeIcon icon={faCalendarAlt} className="mr-3 text-gray-400 w-4" />
                 <span className="text-gray-700">
                   Membre depuis{" "}
-                  {new Date(userDetails.date_creation).toLocaleDateString()}
+                  {new Date(userDetails.date_inscription).toLocaleDateString()}
                 </span>
               </div>
             </div>
@@ -158,7 +182,7 @@ const ProfilePage = () => {
               <FontAwesomeIcon icon={faSeedling} className="mr-2 text-green-600" />
               {userDetails.role === "proprietaire"
                 ? "Mes jardins"
-                : "Mes annonces de jardinage"}
+                : "Mes compétences"}
             </h2>
             
             {annonces.length === 0 ? (
@@ -170,35 +194,54 @@ const ProfilePage = () => {
                 <p className="text-gray-500 mb-4">
                   {userDetails.role === "proprietaire"
                     ? "Vous n'avez pas encore publié de jardin"
-                    : "Vous n'avez pas encore publié d'annonce"}
+                    : "Vous n'avez pas encore défini vos compétences"}
                 </p>
-                <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg">
-                  {userDetails.role === "proprietaire"
-                    ? "Ajouter mon jardin"
-                    : "Créer une annonce"}
-                </button>
+                <Link href={userDetails.role === "proprietaire" ? "/ajouter-jardin" : "/je-veux-jardiner"}>
+                  <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg">
+                    {userDetails.role === "proprietaire"
+                      ? "Ajouter mon jardin"
+                      : "Définir mes compétences"}
+                  </button>
+                </Link>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {Array.isArray(annonces) && annonces.map((annonce) => (
+                {Array.isArray(annonces) && annonces.map((item) => (
                   <div
-                    key={annonce.id_annonce}
+                    key={item.id_jardin || item.id_competence || item.id_annonce || Math.random()}
                     className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
                   >
-                    <h3 className="font-semibold text-gray-800 mb-2">
-                      {annonce.titre}
-                    </h3>
-                    <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                      {annonce.description}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-green-600 font-medium">
-                        {annonce.prix}€
-                      </span>
-                      <button className="text-green-600 hover:text-green-700 text-sm">
-                        Voir détails
-                      </button>
-                    </div>
+                    {userDetails.role === "proprietaire" ? (
+                      // Affichage pour les jardins
+                      <>
+                        <h3 className="font-semibold text-gray-800 mb-2">
+                          {item.titre}
+                        </h3>
+                        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                          {item.description}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-green-600 font-medium">
+                            {item.type || "Jardin"}
+                          </span>
+                          <Link href={`/jardins/${item.id_jardin}`}>
+                            <button className="text-green-600 hover:text-green-700 text-sm">
+                              Voir détails
+                            </button>
+                          </Link>
+                        </div>
+                      </>
+                    ) : (
+                      // Affichage pour les compétences
+                      <>
+                        <div className="text-center py-4">
+                          <FontAwesomeIcon icon={faLeaf} className="text-green-600 text-2xl mb-2" />
+                          <h3 className="font-semibold text-gray-800">
+                            {item.nom}
+                          </h3>
+                        </div>
+                      </>
+                    )}
                   </div>
                 ))}
               </div>
@@ -208,10 +251,19 @@ const ProfilePage = () => {
 
         {/* Réservations */}
         <div className="bg-white rounded-lg shadow-md p-6 mt-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-            <FontAwesomeIcon icon={faCalendarAlt} className="mr-2 text-green-600" />
-            Mes réservations
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-gray-800 flex items-center">
+              <FontAwesomeIcon icon={faCalendarAlt} className="mr-2 text-green-600" />
+              {userDetails.role === "proprietaire" ? "Demandes reçues" : "Mes réservations"}
+            </h2>
+            {reservations.length > 0 && (
+              <Link href="/reservations">
+                <button className="text-green-600 hover:text-green-700 text-sm font-medium">
+                  Voir tout →
+                </button>
+              </Link>
+            )}
+          </div>
           
           {reservations.length === 0 ? (
             <div className="text-center py-8">
@@ -219,29 +271,41 @@ const ProfilePage = () => {
                 icon={faCalendarAlt}
                 className="text-gray-300 text-4xl mb-4"
               />
-              <p className="text-gray-500">Aucune réservation pour le moment</p>
+              <p className="text-gray-500">
+                {userDetails.role === "proprietaire" 
+                  ? "Aucune demande de réservation reçue" 
+                  : "Aucune réservation pour le moment"}
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full table-auto">
                 <thead>
                   <tr className="bg-gray-50">
-                    <th className="px-4 py-2 text-left">Jardin</th>
-                    <th className="px-4 py-2 text-left">Dates</th>
-                    <th className="px-4 py-2 text-left">Prix</th>
-                    <th className="px-4 py-2 text-left">Statut</th>
-                    <th className="px-4 py-2 text-left">Actions</th>
+                    <th className="px-4 py-2 text-left text-gray-700">
+                      {userDetails.role === "proprietaire" ? "Jardin demandé" : "Jardin"}
+                    </th>
+                    <th className="px-4 py-2 text-left text-gray-700">
+                      {userDetails.role === "proprietaire" ? "Demandeur" : "Propriétaire"}
+                    </th>
+                    <th className="px-4 py-2 text-left text-gray-700">Date</th>
+                    <th className="px-4 py-2 text-left text-gray-700">Statut</th>
+                    <th className="px-4 py-2 text-left text-gray-700">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {Array.isArray(reservations) && reservations.map((reservation) => (
                     <tr key={reservation.id_reservation} className="border-b">
-                      <td className="px-4 py-3">{reservation.titre_annonce}</td>
-                      <td className="px-4 py-3">
-                        {new Date(reservation.date_debut).toLocaleDateString()} -{" "}
-                        {new Date(reservation.date_fin).toLocaleDateString()}
+                      <td className="px-4 py-3 text-gray-700">{reservation.titre_annonce}</td>
+                      <td className="px-4 py-3 text-gray-700">
+                        {userDetails.role === "proprietaire" 
+                          ? `${reservation.client_prenom || ''} ${reservation.client_nom || ''}`.trim()
+                          : `${reservation.proprietaire_prenom || ''} ${reservation.proprietaire_nom || ''}`.trim()
+                        }
                       </td>
-                      <td className="px-4 py-3">{reservation.montant_total}€</td>
+                      <td className="px-4 py-3 text-gray-700">
+                        {new Date(reservation.date_reservation).toLocaleDateString()}
+                      </td>
                       <td className="px-4 py-3">
                         <span
                           className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -252,13 +316,15 @@ const ProfilePage = () => {
                               : "bg-red-100 text-red-800"
                           }`}
                         >
-                          {reservation.statut}
+                          {reservation.statut === "refusee" ? "refusée" : reservation.statut}
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <button className="text-green-600 hover:text-green-700 text-sm">
-                          Voir détails
-                        </button>
+                        <Link href={`/reservations/${reservation.id_reservation}`}>
+                          <button className="text-green-600 hover:text-green-700 text-sm">
+                            Voir détails
+                          </button>
+                        </Link>
                       </td>
                     </tr>
                   ))}
@@ -307,7 +373,7 @@ const ProfilePage = () => {
                 className="text-green-600 text-3xl mb-2"
               />
               <h3 className="text-2xl font-bold text-gray-800">{annonces.length}</h3>
-              <p className="text-gray-600">Annonces publiées</p>
+              <p className="text-gray-600">Compétences définies</p>
             </div>
             <div className="bg-white rounded-lg shadow-md p-6 text-center">
               <FontAwesomeIcon

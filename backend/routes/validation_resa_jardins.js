@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const pool = require("../db");
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 // ✅ Créer une réservation
 router.post("/", async (req, res) => {
@@ -11,13 +12,26 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    const result = await pool.query(
-      `INSERT INTO reservation (id_utilisateur, id_jardin, date_reservation, statut, commentaires)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING *`,
-      [id_utilisateur, id_jardin, date_reservation, statut || "en_attente", commentaires || ""]
-    );
-    res.status(201).json(result.rows[0]);
+    const reservation = await prisma.reservation.create({
+      data: {
+        id_utilisateur: BigInt(id_utilisateur),
+        id_jardin: BigInt(id_jardin),
+        date_reservation: new Date(date_reservation),
+        statut: statut || "en_attente",
+        commentaires: commentaires || ""
+      }
+    });
+
+    // Convertir les BigInt en string pour JSON
+    const reservationJSON = {
+      ...reservation,
+      id_reservation: reservation.id_reservation.toString(),
+      id_utilisateur: reservation.id_utilisateur.toString(),
+      id_jardin: reservation.id_jardin?.toString() || null,
+      id_disponibilite: reservation.id_disponibilite?.toString() || null
+    };
+
+    res.status(201).json(reservationJSON);
   } catch (err) {
     console.error("Erreur création réservation :", err);
     res.status(500).json({ error: "Erreur serveur lors de la réservation" });
@@ -29,27 +43,50 @@ router.delete("/:id_reservation", async (req, res) => {
   const { id_reservation } = req.params;
 
   try {
-    await pool.query(`DELETE FROM reservation WHERE id_reservation = $1`, [id_reservation]);
+    await prisma.reservation.delete({
+      where: { id_reservation: BigInt(id_reservation) }
+    });
     res.json({ success: true, message: "Réservation annulée avec succès" });
   } catch (err) {
+    if (err.code === 'P2025') {
+      return res.status(404).json({ error: "Réservation non trouvée" });
+    }
     console.error("Erreur annulation réservation :", err);
-    res.status(500).json({ error: "Erreur serveur lors de l’annulation" });
+    res.status(500).json({ error: "Erreur serveur lors de l'annulation" });
   }
 });
 
-// ✅ Lister les réservations d’un utilisateur
+// ✅ Lister les réservations d'un utilisateur
 router.get("/utilisateur/:id_utilisateur", async (req, res) => {
   const { id_utilisateur } = req.params;
   try {
-    const result = await pool.query(
-      `SELECT r.*, j.titre, j.adresse
-       FROM reservation r
-       JOIN jardin j ON r.id_jardin = j.id_jardin
-       WHERE r.id_utilisateur = $1
-       ORDER BY r.date_reservation DESC`,
-      [id_utilisateur]
-    );
-    res.json(result.rows);
+    const reservations = await prisma.reservation.findMany({
+      where: { id_utilisateur: BigInt(id_utilisateur) },
+      include: {
+        jardin: {
+          select: {
+            titre: true,
+            adresse: true
+          }
+        }
+      },
+      orderBy: {
+        date_reservation: 'desc'
+      }
+    });
+
+    // Convertir et aplatir les données
+    const reservationsJSON = reservations.map(r => ({
+      ...r,
+      id_reservation: r.id_reservation.toString(),
+      id_utilisateur: r.id_utilisateur.toString(),
+      id_jardin: r.id_jardin?.toString() || null,
+      id_disponibilite: r.id_disponibilite?.toString() || null,
+      titre: r.jardin?.titre || null,
+      adresse: r.jardin?.adresse || null
+    }));
+
+    res.json(reservationsJSON);
   } catch (err) {
     console.error("Erreur récupération réservations :", err);
     res.status(500).json({ error: "Erreur serveur" });

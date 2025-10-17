@@ -1,19 +1,24 @@
 const express = require("express");
 const router = express.Router();
-const pool = require("../db");
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 router.post("/", async (req, res) => {
   const { email, ancien_mdp, nouveau_mdp } = req.body;
 
   try {
-    const result = await pool.query("SELECT * FROM utilisateur WHERE email = $1", [email]);
-    const user = result.rows[0];
+    const user = await prisma.utilisateur.findUnique({
+      where: { email: email }
+    });
 
     if (!user || user.mot_de_passe !== ancien_mdp) {
       return res.status(401).json({ error: "Ancien mot de passe incorrect." });
     }
 
-    await pool.query(`UPDATE utilisateur SET mot_de_passe = $1 WHERE email = $2`, [nouveau_mdp, email]);
+    await prisma.utilisateur.update({
+      where: { email: email },
+      data: { mot_de_passe: nouveau_mdp }
+    });
 
     res.json({ message: "Mot de passe modifié avec succès." });
   } catch (err) {

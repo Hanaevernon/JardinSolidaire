@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const pool = require("../db");
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 // POST /api/inscription
 router.post("/", async (req, res) => {
@@ -11,28 +12,30 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    // Vérifie si l’email existe déjà
-    const check = await pool.query(
-      "SELECT id_utilisateur FROM utilisateur WHERE email = $1",
-      [email]
-    );
-    if (check.rows.length > 0) {
+    // Vérifie si l'email existe déjà
+    const existingUser = await prisma.utilisateur.findUnique({
+      where: { email: email }
+    });
+    
+    if (existingUser) {
       return res.status(400).json({ error: "Cet e-mail est déjà utilisé." });
     }
 
     // Insertion
-    const result = await pool.query(
-      `INSERT INTO utilisateur (prenom, nom, email, mot_de_passe, role)
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [prenom, nom, email, password, role]
-    );
-
-    const newUser = result.rows[0];
+    const newUser = await prisma.utilisateur.create({
+      data: {
+        prenom,
+        nom,
+        email,
+        mot_de_passe: password,
+        role
+      }
+    });
 
     res.status(201).json({
       message: "Inscription réussie",
       user: {
-        id_utilisateur: newUser.id_utilisateur,
+        id_utilisateur: newUser.id_utilisateur.toString(),
         prenom: newUser.prenom,
         nom: newUser.nom,
         email: newUser.email,
@@ -54,16 +57,20 @@ router.post("/register", async (req, res) => {
   }
 
   try {
-    const result = await pool.query(
-      "INSERT INTO utilisateur (prenom, nom, email, mot_de_passe, role) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-      [prenom, nom, email, password, role]
-    );
+    const newUser = await prisma.utilisateur.create({
+      data: {
+        prenom,
+        nom,
+        email,
+        mot_de_passe: password,
+        role
+      }
+    });
 
-    const newUser = result.rows[0];
     res.status(201).json({
       message: "Inscription réussie !",
       user: {
-        id_utilisateur: newUser.id_utilisateur,
+        id_utilisateur: newUser.id_utilisateur.toString(),
         prenom: newUser.prenom,
         nom: newUser.nom,
         email: newUser.email,

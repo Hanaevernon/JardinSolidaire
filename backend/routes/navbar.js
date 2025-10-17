@@ -1,25 +1,23 @@
 const express = require("express");
 const router = express.Router();
-const pool = require("../db");
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 // Vérifie si l'utilisateur a déjà une annonce (jardin ou jardinier)
 router.get("/:id_utilisateur/has-annonce", async (req, res) => {
   const { id_utilisateur } = req.params;
   try {
-    // Vérifier si c’est un propriétaire (annonce de jardin)
-    const jardin = await pool.query(
-      "SELECT 1 FROM jardin WHERE id_proprietaire = $1 LIMIT 1",
-      [id_utilisateur]
-    );
+    // Vérifier si c'est un propriétaire (annonce de jardin)
+    const jardin = await prisma.jardin.findFirst({
+      where: { id_proprietaire: BigInt(id_utilisateur) }
+    });
 
-    // Vérifier si c’est un ami_du_vert (annonce de jardinier)
-    const jardinier = await pool.query(
-      "SELECT 1 FROM jardinier WHERE id_utilisateur = $1 LIMIT 1",
-      [id_utilisateur]
-    );
+    // Note: Le fichier original utilise une table 'jardinier' qui n'existe pas dans le schéma Prisma
+    // Pour l'instant, on vérifie seulement les jardins
+    // TODO: Adapter selon votre logique métier pour les jardiniers
 
-    // Si l’utilisateur a au moins une annonce
-    const hasAnnonce = jardin.rows.length > 0 || jardinier.rows.length > 0;
+    // Si l'utilisateur a au moins une annonce
+    const hasAnnonce = !!jardin;
 
     res.json({ hasAnnonce });
   } catch (err) {
