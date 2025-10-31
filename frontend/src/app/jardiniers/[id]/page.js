@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -60,6 +61,7 @@ export default function JardinierDetailPage() {
   const [jardinier, setJardinier] = useState(null);
   const [loading, setLoading] = useState(true);
   const [reservationDate, setReservationDate] = useState(null);
+  const [showContact, setShowContact] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -108,10 +110,44 @@ export default function JardinierDetailPage() {
         />
         <div>
           <h1 className="text-2xl font-bold text-green-800">{jardinier.titre}</h1>
+          {jardinier.prenom || jardinier.nom ? (
+            <p className="text-lg font-semibold text-green-700 mb-1">
+              {jardinier.prenom} {jardinier.nom}
+            </p>
+          ) : null}
           <p className="text-sm text-gray-600">{jardinier.description}</p>
           <p className="text-sm text-gray-600">📍 {jardinier.localisation}</p>
           <p className="text-sm text-gray-600">🕒 {jardinier.disponibilites}</p>
           <p className="text-sm text-pink-700">🌱 {jardinier.competences}</p>
+          {/* Bouton contacter */}
+          <button
+            className="mt-3 px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded"
+            onClick={() => setShowContact((v) => !v)}
+          >
+            Contacter
+          </button>
+          {showContact && (
+            <div className="mt-3 p-3 bg-white border rounded shadow text-gray-800">
+              {jardinier.email || jardinier.telephone ? (
+                <>
+                  {jardinier.email && (
+                    <p className="mb-1">Email : <a href={`mailto:${jardinier.email}`} className="text-green-700 underline">{jardinier.email}</a></p>
+                  )}
+                  {jardinier.telephone && (
+                    <p className="mb-1">Téléphone : <a href={`tel:${jardinier.telephone}`} className="text-green-700 underline">{jardinier.telephone}</a></p>
+                  )}
+                  <hr className="my-2" />
+                </>
+              ) : null}
+              <Link
+                href={`/messages?to=${jardinier.id_utilisateur}`}
+                className="inline-block mt-1 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                onClick={() => setShowContact(false)}
+              >
+                Envoyer un message
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 

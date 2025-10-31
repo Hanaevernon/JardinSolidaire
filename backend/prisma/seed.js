@@ -199,8 +199,58 @@ async function seedJardin() {
   console.log('✅ Jardins insérés avec succès !');
 };
 
+async function seedJardiniers() {
+  const alice = await prisma.utilisateur.findUnique({ where: { email: 'alice@example.com' } });
+  const emma = await prisma.utilisateur.findUnique({ where: { email: 'emma@example.com' } });
+  const chloe = await prisma.utilisateur.findUnique({ where: { email: 'chloe@example.com' } });
 
+  if (!alice || !emma || !chloe) {
+    throw new Error("Certains utilisateurs amis_du_vert n'existent pas. Vérifie les emails !");
+  }
 
+  await prisma.jardiniers.createMany({
+    data: [
+      {
+        id_utilisateur: alice.id_utilisateur,
+        titre: 'Herboriste expérimentée propose ses services',
+        description: 'Passionnée par les plantes médicinales et aromatiques, je propose mes services pour vous aider à créer votre jardin de simples. Je peux vous accompagner dans la création de tisanes maison et vous enseigner les bases de l\'herboristerie.',
+        localisation: 'Paris 15ème',
+        disponibilites: 'Weekends et mercredis après-midi',
+        competences: 'Herboristerie, plantes médicinales, tisanes, jardinage naturel',
+        photos: [
+          'https://img.freepik.com/photos-gratuite/femme-jardinant-dans-son-jardin_23-2148774916.jpg'
+        ],
+        date_creation: new Date(),
+      },
+      {
+        id_utilisateur: emma.id_utilisateur,
+        titre: 'Apprentie jardinière motivée cherche expérience',
+        description: 'Débutante mais très motivée, je souhaite apprendre en participant à vos projets de jardinage. En échange de mon aide, j\'aimerais acquérir de l\'expérience en permaculture et jardinage naturel.',
+        localisation: 'Marseille et alentours',
+        disponibilites: 'Flexible, tous les jours sauf mardi',
+        competences: 'Motivation, apprentissage rapide, jardinage débutant',
+        photos: [
+          'https://img.freepik.com/photos-gratuite/jeune-femme-plantant-dans-jardin_23-2148774921.jpg'
+        ],
+        date_creation: new Date(),
+      },
+      {
+        id_utilisateur: chloe.id_utilisateur,
+        titre: 'Spécialiste fleurs comestibles et plantes grimpantes',
+        description: 'Je me spécialise dans la culture de fleurs comestibles et l\'installation de plantes grimpantes. Je peux vous aider à embellir votre jardin tout en le rendant productif avec des fleurs que vous pourrez cuisiner.',
+        localisation: 'Toulouse centre',
+        disponibilites: 'Matinées en semaine et samedis',
+        competences: 'Fleurs comestibles, plantes grimpantes, aménagement paysager, cuisine des fleurs',
+        photos: [
+          'https://img.freepik.com/photos-gratuite/arrangement-fleurs-comestibles_23-2148774925.jpg'
+        ],
+        date_creation: new Date(),
+      },
+    ],
+  });
+
+  console.log('✅ Annonces de jardiniers insérées avec succès !');
+};
 
 async function main() {
   console.log("👉 Lancement de main()");
@@ -215,6 +265,9 @@ async function main() {
 
   await seedJardin();
   console.log("✅ seedJardin terminé");
+
+  await seedJardiniers();
+  console.log("✅ seedJardiniers terminé");
 
   await seedReservation();
   console.log("✅ seedReservation terminé");

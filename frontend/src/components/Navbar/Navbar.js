@@ -102,12 +102,12 @@ const Navbar = () => {
         <div className="bg-green-600 w-full absolute top-16 left-0">
           <ul className="flex flex-col space-y-2 p-4">
             <li>
-              <Link href="/profile" className="block">
+              <Link href="/profile" className="block" onClick={() => setMenuOpen(false)}>
                 Mon Profil
               </Link>
             </li>
             <li>
-              <Link href="/messages" className="block">
+              <Link href="/messages" className="block" onClick={() => setMenuOpen(false)}>
                 Ma messagerie
               </Link>
             </li>
@@ -115,12 +115,12 @@ const Navbar = () => {
             {user.role === "proprietaire" ? (
               <>
                 <li>
-                  <Link href="/demandes-recues" className="block">
+                  <Link href="/demandes-recues" className="block" onClick={() => setMenuOpen(false)}>
                     Demandes reçues
                   </Link>
                 </li>
                 <li>
-                  <Link href="/mes-reservations" className="block">
+                  <Link href="/mes-reservations" className="block" onClick={() => setMenuOpen(false)}>
                     Mes réservations
                   </Link>
                 </li>
@@ -128,19 +128,19 @@ const Navbar = () => {
             ) : (
               <>
                 <li>
-                  <Link href="/mes-reservations-jardins" className="block">
+                  <Link href="/mes-reservations-jardins" className="block" onClick={() => setMenuOpen(false)}>
                     Mes réservations de jardins
                   </Link>
                 </li>
                 <li>
-                  <Link href="/mes-services" className="block">
+                  <Link href="/mes-services" className="block" onClick={() => setMenuOpen(false)}>
                     Mes services proposés
                   </Link>
                 </li>
               </>
             )}
             <li>
-              <Link href="/favorites" className="block">
+              <Link href="/favorites" className="block" onClick={() => setMenuOpen(false)}>
                 Mes Favoris
               </Link>
             </li>

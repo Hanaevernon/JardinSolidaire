@@ -31,7 +31,11 @@ function getPhotoUrl(photo) {
   // ✅ Supprimer un éventuel "assets/" en début de chaîne
   p = p.replace(/^assets\//, "");
 
-  // ✅ Retourner une URL correcte
+  // ✅ Si c'est une URL externe, on la retourne telle quelle
+  if (p.startsWith('http://') || p.startsWith('https://')) {
+    return p;
+  }
+  // Sinon, on retourne l'URL locale
   return `/assets/${p}`;
 }
 

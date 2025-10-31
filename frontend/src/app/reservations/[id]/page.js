@@ -124,7 +124,7 @@ const ReservationDetailPage = () => {
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* En-tête */}
         <div className="flex items-center mb-6">
-          <Link href="/profile" className="mr-4">
+          <Link href="/mes-reservations" className="mr-4">
             <button className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg flex items-center">
               <FontAwesomeIcon icon={faArrowLeft} className="mr-2" />
               Retour
@@ -152,49 +152,63 @@ const ReservationDetailPage = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Informations du jardin */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-                <FontAwesomeIcon icon={faSeedling} className="mr-2 text-green-600" />
-                Jardin réservé
-              </h3>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="font-medium text-gray-800 mb-2">
-                  {reservation.titre_annonce || "Titre non disponible"}
-                </h4>
-                <div className="flex items-center text-gray-600 mb-2">
-                  <FontAwesomeIcon icon={faMapMarkerAlt} className="mr-2" />
-                  <span>{reservation.adresse || "Adresse non disponible"}</span>
-                </div>
-                <div className="text-gray-600">
-                  <strong>Type:</strong> {reservation.type || "Non spécifié"}
-                </div>
-              </div>
-            </div>
 
-            {/* Informations du propriétaire */}
-            <div className="space-y-4">
+          {/* Affichage dynamique selon le type de réservation */}
+          {/* Si id_jardin est null, c'est une réservation d'un jardinier (Ami du vert) */}
+          {reservation.id_jardin === null ? (
+            <div className="col-span-2 space-y-4">
               <h3 className="text-lg font-semibold text-gray-800 flex items-center">
                 <FontAwesomeIcon icon={faUser} className="mr-2 text-green-600" />
-                Propriétaire
+                Ami du vert réservé
               </h3>
               <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="font-medium text-gray-800 mb-2">
-                  {reservation.proprietaire_prenom} {reservation.proprietaire_nom}
-                </h4>
-                <div className="space-y-2 text-gray-600">
-                  <div className="flex items-center">
-                    <FontAwesomeIcon icon={faEnvelope} className="mr-2 w-4" />
-                    <span>Contact disponible après confirmation</span>
+                <p className="text-gray-700">Les informations du jardinier réservé ne sont pas disponibles dans cette version.<br/>Merci de contacter l'administrateur pour améliorer l'affichage.</p>
+              </div>
+            </div>
+          ) : (
+            // Cas réservation d'un jardin
+            <>
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                  <FontAwesomeIcon icon={faSeedling} className="mr-2 text-green-600" />
+                  Jardin réservé
+                </h3>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-800 mb-2">
+                    {reservation.titre_annonce || "Titre non disponible"}
+                  </h4>
+                  <div className="flex items-center text-gray-600 mb-2">
+                    <FontAwesomeIcon icon={faMapMarkerAlt} className="mr-2" />
+                    <span>{reservation.adresse || "Adresse non disponible"}</span>
                   </div>
-                  <div className="flex items-center">
-                    <FontAwesomeIcon icon={faPhone} className="mr-2 w-4" />
-                    <span>Téléphone disponible après confirmation</span>
+                  <div className="text-gray-600">
+                    <strong>Type:</strong> {reservation.type || "Non spécifié"}
                   </div>
                 </div>
               </div>
-            </div>
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                  <FontAwesomeIcon icon={faUser} className="mr-2 text-green-600" />
+                  Propriétaire
+                </h3>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-800 mb-2">
+                    {reservation.proprietaire_prenom} {reservation.proprietaire_nom}
+                  </h4>
+                  <div className="space-y-2 text-gray-600">
+                    <div className="flex items-center">
+                      <FontAwesomeIcon icon={faEnvelope} className="mr-2 w-4" />
+                      <span>Contact disponible après confirmation</span>
+                    </div>
+                    <div className="flex items-center">
+                      <FontAwesomeIcon icon={faPhone} className="mr-2 w-4" />
+                      <span>Téléphone disponible après confirmation</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
           </div>
 
           {/* Dates de réservation */}
@@ -312,7 +326,6 @@ const ReservationDetailPage = () => {
           </div>
         </div>
       </div>
-    </div>
   );
 };
 

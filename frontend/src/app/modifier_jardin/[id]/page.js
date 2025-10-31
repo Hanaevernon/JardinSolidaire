@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 
-export default function ModifierJardinPage({ searchParams }) {
-  const id = searchParams?.id; // ex: /modifier-jardin?id=2
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
+
+export default function ModifierJardinPage() {
+  const { id } = useParams(); // ex: /modifier_jardin/[id]
   const [jardin, setJardin] = useState(null);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({
@@ -13,6 +16,7 @@ export default function ModifierJardinPage({ searchParams }) {
     superficie: "",
     type: "",
     besoins: "",
+    region: "",
   });
   const [anciennesPhotos, setAnciennesPhotos] = useState([]);
   const [nouvellesPhotos, setNouvellesPhotos] = useState([]);
@@ -26,14 +30,27 @@ export default function ModifierJardinPage({ searchParams }) {
       .then((data) => {
         setJardin(data);
         setForm({
-          titre: data.titre,
-          description: data.description,
-          adresse: data.adresse,
-          superficie: data.superficie,
-          type: data.type,
-          besoins: data.besoins,
+          titre: data.titre || "",
+          description: data.description || "",
+          adresse: data.adresse || "",
+          superficie: data.superficie ? String(data.superficie) : "",
+          type: data.type || "",
+          besoins: data.besoins || "",
+          region: data.region || "",
         });
-        setAnciennesPhotos(JSON.parse(data.photos || "[]"));
+        // Gestion robuste des photos (tableau, JSON ou string)
+        let photos = [];
+        if (Array.isArray(data.photos)) {
+          photos = data.photos;
+        } else if (typeof data.photos === "string" && data.photos.length > 0) {
+          try {
+            photos = JSON.parse(data.photos);
+            if (!Array.isArray(photos)) photos = [data.photos];
+          } catch {
+            photos = [data.photos];
+          }
+        }
+        setAnciennesPhotos(photos);
         setLoading(false);
       })
       .catch((err) => {
@@ -53,6 +70,7 @@ export default function ModifierJardinPage({ searchParams }) {
     setNouvellesPhotos([...e.target.files]);
   };
 
+  const router = useRouter();
   // Envoyer mise à jour
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -62,9 +80,10 @@ export default function ModifierJardinPage({ searchParams }) {
     formData.append("titre", form.titre);
     formData.append("description", form.description);
     formData.append("adresse", form.adresse);
-    formData.append("superficie", form.superficie);
-    formData.append("type", form.type);
-    formData.append("besoins", form.besoins);
+  if (form.superficie) formData.append("superficie", form.superficie);
+  if (form.type) formData.append("type", form.type);
+  if (form.besoins) formData.append("besoins", form.besoins);
+  if (form.region) formData.append("region", form.region);
 
     anciennesPhotos.forEach((p) => formData.append("anciennesPhotos", p));
     nouvellesPhotos.forEach((photo) => formData.append("photos", photo));
@@ -81,6 +100,7 @@ export default function ModifierJardinPage({ searchParams }) {
       if (!res.ok) throw new Error("Erreur modification jardin");
 
       alert("✅ Jardin modifié avec succès !");
+      router.push("/profile");
     } catch (err) {
       console.error("❌ Erreur :", err);
       alert("Erreur lors de la modification du jardin");
@@ -143,6 +163,34 @@ export default function ModifierJardinPage({ searchParams }) {
           className="w-full border rounded p-2"
           required
         />
+
+        <select
+          name="region"
+          value={form.region}
+          onChange={handleChange}
+          className="w-full border rounded p-2"
+          required
+        >
+          <option value="">Sélectionner une région</option>
+          <option value="Auvergne-Rhône-Alpes">Auvergne-Rhône-Alpes</option>
+          <option value="Bourgogne-Franche-Comté">Bourgogne-Franche-Comté</option>
+          <option value="Bretagne">Bretagne</option>
+          <option value="Centre-Val de Loire">Centre-Val de Loire</option>
+          <option value="Corse">Corse</option>
+          <option value="Grand Est">Grand Est</option>
+          <option value="Hauts-de-France">Hauts-de-France</option>
+          <option value="Île-de-France">Île-de-France</option>
+          <option value="Normandie">Normandie</option>
+          <option value="Nouvelle-Aquitaine">Nouvelle-Aquitaine</option>
+          <option value="Occitanie">Occitanie</option>
+          <option value="Pays de la Loire">Pays de la Loire</option>
+          <option value="Provence-Alpes-Côte d'Azur">Provence-Alpes-Côte d'Azur</option>
+          <option value="Guadeloupe">Guadeloupe</option>
+          <option value="Martinique">Martinique</option>
+          <option value="Guyane">Guyane</option>
+          <option value="La Réunion">La Réunion</option>
+          <option value="Mayotte">Mayotte</option>
+        </select>
         <input
           type="text"
           name="besoins"
@@ -158,14 +206,23 @@ export default function ModifierJardinPage({ searchParams }) {
           <h2 className="font-semibold text-gray-700 mb-2">Photos existantes</h2>
           <div className="flex gap-4 flex-wrap">
             {anciennesPhotos.length > 0 ? (
-              anciennesPhotos.map((p, idx) => (
-                <img
-                  key={idx}
-                  src={p}
-                  alt={`photo-${idx}`}
-                  className="w-24 h-24 object-cover rounded border"
-                />
-              ))
+              anciennesPhotos.map((p, idx) => {
+                let src = p;
+                // Si le chemin ne commence pas par http ou /uploads, on le préfixe
+                if (typeof p === "string" && !p.startsWith("http") && !p.startsWith("/uploads")) {
+                  src = `http://localhost:5001/uploads/${p}`;
+                } else if (typeof p === "string" && p.startsWith("/uploads")) {
+                  src = `http://localhost:5001${p}`;
+                }
+                return (
+                  <img
+                    key={idx}
+                    src={src}
+                    alt={`photo-${idx}`}
+                    className="w-24 h-24 object-cover rounded border"
+                  />
+                );
+              })
             ) : (
               <p className="text-gray-500">Aucune photo</p>
             )}

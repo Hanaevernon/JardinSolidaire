@@ -14,6 +14,7 @@ export default function AjouterJardin() {
     superficie: "",
     type: "",
     besoins: "",
+    region: "",
   });
   const [photos, setPhotos] = useState([]);
 
@@ -50,8 +51,10 @@ export default function AjouterJardin() {
       data.append("description", formData.description);
       data.append("adresse", formData.adresse);
       data.append("superficie", formData.superficie);
-      data.append("type", formData.type);
-      data.append("besoins", formData.besoins);
+
+  data.append("type", formData.type);
+  data.append("besoins", formData.besoins);
+  data.append("region", formData.region);
 
       photos.forEach((file) => {
         data.append("photos", file);
@@ -174,6 +177,7 @@ export default function AjouterJardin() {
             />
           </div>
 
+
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Type de jardin :
@@ -185,6 +189,39 @@ export default function AjouterJardin() {
               onChange={handleChange}
               className="mt-1 w-full border rounded px-3 py-2 text-gray-700"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Région :
+            </label>
+            <select
+              name="region"
+              value={formData.region}
+              onChange={handleChange}
+              className="mt-1 w-full border rounded px-3 py-2 text-gray-700"
+              required
+            >
+              <option value="">Sélectionner une région</option>
+              <option value="Auvergne-Rhône-Alpes">Auvergne-Rhône-Alpes</option>
+              <option value="Bourgogne-Franche-Comté">Bourgogne-Franche-Comté</option>
+              <option value="Bretagne">Bretagne</option>
+              <option value="Centre-Val de Loire">Centre-Val de Loire</option>
+              <option value="Corse">Corse</option>
+              <option value="Grand Est">Grand Est</option>
+              <option value="Hauts-de-France">Hauts-de-France</option>
+              <option value="Île-de-France">Île-de-France</option>
+              <option value="Normandie">Normandie</option>
+              <option value="Nouvelle-Aquitaine">Nouvelle-Aquitaine</option>
+              <option value="Occitanie">Occitanie</option>
+              <option value="Pays de la Loire">Pays de la Loire</option>
+              <option value="Provence-Alpes-Côte d'Azur">Provence-Alpes-Côte d'Azur</option>
+              <option value="Guadeloupe">Guadeloupe</option>
+              <option value="Martinique">Martinique</option>
+              <option value="Guyane">Guyane</option>
+              <option value="La Réunion">La Réunion</option>
+              <option value="Mayotte">Mayotte</option>
+            </select>
           </div>
 
           <div>

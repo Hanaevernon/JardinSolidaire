@@ -51,7 +51,7 @@ model heurescumul_es {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model jardin {
   id_jardin        BigInt           @id @default(autoincrement())
-  id_proprietaire  BigInt           @unique
+  id_proprietaire  BigInt           
   titre            String?
   description      String?
   adresse          String?
@@ -131,7 +131,7 @@ model utilisateur {
   // Relations
   avis                                               avis[]
   heurescumul_es                                     heurescumul_es[]
-  jardin                                             jardin?           // 🔧 un seul jardin maximum
+  jardins                                            jardin[]           // 🔧 un utilisateur peut avoir plusieurs jardins
   jardiniers                                         jardiniers[]      // 🔧 annonces de jardinier
   messagerie_messagerie_id_destinataireToutilisateur messagerie[]     @relation("messagerie_id_destinataireToutilisateur")
   messagerie_messagerie_id_envoyeurToutilisateur     messagerie[]     @relation("messagerie_id_envoyeurToutilisateur")

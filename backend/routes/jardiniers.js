@@ -187,7 +187,9 @@ router.get("/:id", async (req, res) => {
         u.nom,
         u.note_moyenne,
         u.photo_profil,
-        u.biographie
+        u.biographie,
+        u.email,
+        u.telephone
       FROM jardiniers j
       JOIN utilisateur u ON j.id_utilisateur = u.id_utilisateur
       WHERE j.id_jardinier = $1

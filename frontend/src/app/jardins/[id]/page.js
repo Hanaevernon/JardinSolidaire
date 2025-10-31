@@ -1,6 +1,36 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import Slider from "react-slick";
+
+function ArrowLeft(props) {
+  const { className, style, onClick } = props;
+  return (
+    <button
+      className={className}
+      style={{ ...style, display: "block", left: 10, zIndex: 2, background: "rgba(255,255,255,0.7)", borderRadius: "50%" }}
+      onClick={onClick}
+      aria-label="Précédent"
+    >
+      <span style={{ fontSize: 24, color: '#16a34a' }}>{'‹'}</span>
+    </button>
+  );
+}
+
+function ArrowRight(props) {
+  const { className, style, onClick } = props;
+  return (
+    <button
+      className={className}
+      style={{ ...style, display: "block", right: 10, zIndex: 2, background: "rgba(255,255,255,0.7)", borderRadius: "50%" }}
+      onClick={onClick}
+      aria-label="Suivant"
+    >
+      <span style={{ fontSize: 24, color: '#16a34a' }}>{'›'}</span>
+    </button>
+  );
+}
 import { useRouter, useParams } from "next/navigation";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -13,6 +43,7 @@ export default function JardinPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
+  const [showContact, setShowContact] = useState(false);
 
   useEffect(() => {
     async function fetchJardin() {
@@ -44,9 +75,7 @@ export default function JardinPage() {
   if (error) return <p className="p-6 text-center text-red-500">Erreur : {error}</p>;
   if (!jardin) return <p className="p-6 text-center">Jardin introuvable 🌱</p>;
 
-  const photos = Array.isArray(jardin.photos) ? jardin.photos : [];
-  const mainPhoto = photos[0] ?? "/assets/default.jpg";
-  const thumbnails = photos.slice(1);
+  const photos = Array.isArray(jardin.photos) ? jardin.photos.slice(0, 5) : [];
 
   return (
     <div className="min-h-screen p-6 bg-white">
@@ -63,22 +92,32 @@ export default function JardinPage() {
       {/* Photos */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="lg:col-span-2">
-          <img
-            src={mainPhoto}
-            alt="Photo principale"
-            className="rounded-lg w-full h-64 object-cover mb-4"
-          />
-          {thumbnails.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {thumbnails.map((photo, idx) => (
+          {photos.length > 0 ? (
+            <Slider
+              dots={true}
+              infinite={photos.length > 1}
+              speed={500}
+              slidesToShow={1}
+              slidesToScroll={1}
+              className="mb-4"
+              prevArrow={<ArrowLeft />}
+              nextArrow={<ArrowRight />}
+            >
+              {photos.map((photo, idx) => (
                 <img
                   key={idx}
                   src={photo}
-                  alt={`Miniature ${idx + 1}`}
-                  className="h-24 w-full object-cover rounded-lg hover:scale-105 transition-transform cursor-pointer"
+                  alt={`Photo ${idx + 1}`}
+                  className="rounded-lg w-full h-64 object-cover"
                 />
               ))}
-            </div>
+            </Slider>
+          ) : (
+            <img
+              src="/assets/default.jpg"
+              alt="Image par défaut"
+              className="rounded-lg w-full h-64 object-cover mb-4"
+            />
           )}
         </div>
 
@@ -88,12 +127,37 @@ export default function JardinPage() {
             Informations du Propriétaire
           </h3>
           <p className="mb-2 text-green-800">
-            Nom : {jardin.utilisateur?.nom}
+            Nom : {jardin.utilisateur?.prenom} {jardin.utilisateur?.nom}
           </p>
           <p className="mb-2 text-green-800">✅ Statut vérifié</p>
-          <button className="mt-4 px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded">
+          <button
+            className="mt-4 px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded"
+            onClick={() => setShowContact((v) => !v)}
+          >
             Contacter
           </button>
+          {showContact && (
+            <div className="mt-3 p-3 bg-white border rounded shadow text-gray-800">
+              {jardin.utilisateur?.email || jardin.utilisateur?.telephone ? (
+                <>
+                  {jardin.utilisateur?.email && (
+                    <p className="mb-1">Email : <a href={`mailto:${jardin.utilisateur.email}`} className="text-green-700 underline">{jardin.utilisateur.email}</a></p>
+                  )}
+                  {jardin.utilisateur?.telephone && (
+                    <p className="mb-1">Téléphone : <a href={`tel:${jardin.utilisateur.telephone}`} className="text-green-700 underline">{jardin.utilisateur.telephone}</a></p>
+                  )}
+                  <hr className="my-2" />
+                </>
+              ) : null}
+              <Link
+                href={`/messages?to=${jardin.utilisateur?.id_utilisateur}`}
+                className="inline-block mt-1 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                onClick={() => setShowContact(false)}
+              >
+                Envoyer un message
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 

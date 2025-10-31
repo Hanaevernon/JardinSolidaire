@@ -123,14 +123,18 @@ const ListeJardins = () => {
                       slidesToShow={1}
                       slidesToScroll={1}
                     >
-                      {jardin.photos.map((photo, index) => (
-                        <img
-                          key={index}
-                          src={photo}
-                          alt={`Photo ${index + 1}`}
-                          className="h-48 w-full object-cover"
-                        />
-                      ))}
+                      {jardin.photos.map((photo, index) => {
+                        const isExternal = typeof photo === 'string' && (photo.startsWith('http://') || photo.startsWith('https://'));
+                        const imageUrl = isExternal ? photo : `/assets/${photo.replace(/^assets\//, '')}`;
+                        return (
+                          <img
+                            key={index}
+                            src={imageUrl}
+                            alt={`Photo ${index + 1}`}
+                            className="h-48 w-full object-cover"
+                          />
+                        );
+                      })}
                     </Slider>
                   ) : (
                     <img

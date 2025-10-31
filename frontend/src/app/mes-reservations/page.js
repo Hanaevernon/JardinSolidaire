@@ -26,7 +26,7 @@ const MesReservationsPage = () => {
     if (storedUser) {
       const userData = JSON.parse(storedUser);
       setUser(userData);
-      fetchReservations(userData.id_utilisateur);
+  fetchReservations(userData.id_utilisateur);
     } else {
       window.location.href = "/connexion";
     }
@@ -35,7 +35,7 @@ const MesReservationsPage = () => {
   const fetchReservations = async (userId) => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/reservations/user/${userId}`
+        `${process.env.NEXT_PUBLIC_API_URL}/reservations/utilisateur/${userId}`
       );
       const data = await response.json();
       setReservations(Array.isArray(data) ? data : []);
@@ -199,12 +199,21 @@ const MesReservationsPage = () => {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center mb-3">
-                        <FontAwesomeIcon 
-                          icon={faSeedling} 
-                          className="text-green-600 mr-3 text-xl" 
-                        />
+                        {reservation.id_jardin === null ? (
+                          <FontAwesomeIcon 
+                            icon={faUser} 
+                            className="text-green-600 mr-3 text-xl" 
+                          />
+                        ) : (
+                          <FontAwesomeIcon 
+                            icon={faSeedling} 
+                            className="text-green-600 mr-3 text-xl" 
+                          />
+                        )}
                         <h3 className="text-lg font-semibold text-gray-800">
-                          {reservation.titre_annonce || "Jardin"}
+                          {reservation.id_jardin === null
+                            ? "Ami du vert"
+                            : (reservation.titre_annonce || "Jardin")}
                         </h3>
                         <span className="ml-3 px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
                           <FontAwesomeIcon icon={faClock} className="mr-1" />
@@ -217,14 +226,18 @@ const MesReservationsPage = () => {
                           <div className="flex items-center">
                             <FontAwesomeIcon icon={faUser} className="mr-2 w-4" />
                             <span className="font-medium">
-                              Propriétaire : {reservation.proprietaire_prenom} {reservation.proprietaire_nom}
+                              {reservation.id_jardin === null
+                                ? `Ami du vert : ${reservation.jardinier_prenom ? reservation.jardinier_prenom : "Jardinier inconnu"}`
+                                : `Propriétaire : ${reservation.proprietaire_prenom || ""} ${reservation.proprietaire_nom || ""}`}
                             </span>
                           </div>
-                          {reservation.proprietaire_adresse && (
-                            <div className="flex items-start">
-                              <FontAwesomeIcon icon={faMapMarkerAlt} className="mr-2 w-4 mt-0.5" />
-                              <span>{reservation.proprietaire_adresse}</span>
-                            </div>
+                          {reservation.id_jardin === null ? null : (
+                            reservation.proprietaire_adresse && (
+                              <div className="flex items-start">
+                                <FontAwesomeIcon icon={faMapMarkerAlt} className="mr-2 w-4 mt-0.5" />
+                                <span>{reservation.proprietaire_adresse}</span>
+                              </div>
+                            )
                           )}
                         </div>
                         <div className="text-sm text-gray-600">

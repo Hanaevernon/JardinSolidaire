@@ -1,3 +1,4 @@
+
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -88,6 +89,23 @@ const ProfilePage = () => {
     } catch (error) {
       console.error("Erreur lors du chargement du profil:", error);
       setLoading(false);
+    }
+  };
+
+  // Suppression d'une annonce de jardin
+  const supprimerAnnonce = async (id_jardin) => {
+    if (!window.confirm("Voulez-vous vraiment supprimer ce jardin ?")) return;
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/jardins/${id_jardin}`, {
+        method: "DELETE",
+      });
+      if (response.ok) {
+        setAnnonces((prev) => prev.filter((a) => a.id_jardin !== id_jardin));
+      } else {
+        alert("Erreur lors de la suppression.");
+      }
+    } catch (e) {
+      alert("Erreur lors de la suppression.");
     }
   };
 
@@ -220,15 +238,28 @@ const ProfilePage = () => {
                         <p className="text-gray-600 text-sm mb-3 line-clamp-2">
                           {item.description}
                         </p>
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
                           <span className="text-green-600 font-medium">
                             {item.type || "Jardin"}
                           </span>
-                          <Link href={`/jardins/${item.id_jardin}`}>
-                            <button className="text-green-600 hover:text-green-700 text-sm">
-                              Voir détails
+                          <div className="flex gap-2">
+                            <Link href={`/jardins/${item.id_jardin}`}>
+                              <button className="text-green-600 hover:text-green-700 text-sm">
+                                Voir détails
+                              </button>
+                            </Link>
+                            <Link href={`/modifier_jardin/${item.id_jardin}`}>
+                              <button className="text-blue-600 hover:text-blue-700 text-sm">
+                                Modifier
+                              </button>
+                            </Link>
+                            <button
+                              className="text-red-600 hover:text-red-700 text-sm"
+                              onClick={() => supprimerAnnonce(item.id_jardin)}
+                            >
+                              Supprimer
                             </button>
-                          </Link>
+                          </div>
                         </div>
                       </>
                     ) : (
@@ -396,6 +427,6 @@ const ProfilePage = () => {
       </div>
     </div>
   );
-};
+}
 
 export default ProfilePage;
