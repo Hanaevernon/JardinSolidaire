@@ -151,12 +151,12 @@ const MesReservationsPage = () => {
               Gérez vos réservations de jardins et services de jardinage
             </p>
           </div>
-          <Link href="/jardins">
+          {/* <Link href="/jardins">
             <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg flex items-center">
               <FontAwesomeIcon icon={faPlus} className="mr-2" />
               Nouvelle réservation
             </button>
-          </Link>
+          </Link> */}
         </div>
 
         {/* Statistiques */}

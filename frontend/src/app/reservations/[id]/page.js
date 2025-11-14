@@ -124,7 +124,7 @@ const ReservationDetailPage = () => {
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* En-tête */}
         <div className="flex items-center mb-6">
-          <Link href="/mes-reservations" className="mr-4">
+          <Link href="/demandes-recues" className="mr-4">
             <button className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg flex items-center">
               <FontAwesomeIcon icon={faArrowLeft} className="mr-2" />
               Retour
@@ -221,18 +221,22 @@ const ReservationDetailPage = () => {
                 <div className="text-center">
                   <p className="text-sm text-gray-600">Date de début</p>
                   <p className="text-lg font-medium text-gray-800">
-                    {reservation.date_debut 
+                    {reservation.date_debut
                       ? new Date(reservation.date_debut).toLocaleDateString()
-                      : "Non spécifiée"}
+                      : reservation.date_reservation
+                        ? new Date(reservation.date_reservation).toLocaleDateString()
+                        : "Non spécifiée"}
                   </p>
                 </div>
                 <div className="text-2xl text-gray-400">→</div>
                 <div className="text-center">
                   <p className="text-sm text-gray-600">Date de fin</p>
                   <p className="text-lg font-medium text-gray-800">
-                    {reservation.date_fin 
+                    {reservation.date_fin
                       ? new Date(reservation.date_fin).toLocaleDateString()
-                      : "Non spécifiée"}
+                      : reservation.date_reservation
+                        ? new Date(reservation.date_reservation).toLocaleDateString()
+                        : "Non spécifiée"}
                   </p>
                 </div>
               </div>

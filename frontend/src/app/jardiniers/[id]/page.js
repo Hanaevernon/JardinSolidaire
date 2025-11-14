@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import DatePicker from "react-datepicker";
@@ -55,34 +56,7 @@ function getPhotoUrl(photo) {
 
 
 export default function JardinierDetailPage() {
-  const { id } = useParams();
-  const router = useRouter();
-
-  const [jardinier, setJardinier] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [reservationDate, setReservationDate] = useState(null);
-  const [showContact, setShowContact] = useState(false);
-
-  useEffect(() => {
-    if (id) {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/jardiniers/${id}`)
-        .then((res) => {
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          return res.json();
-        })
-        .then((data) => {
-          console.log("Données jardinier reçues:", data);
-          console.log("Photos jardinier:", data.photos);
-          setJardinier(data);
-          setLoading(false);
-        })
-        .catch((err) => {
-          console.error("❌ Erreur récupération jardinier :", err);
-          setLoading(false);
-        });
-    }
-  }, [id]);
-
+  // Fonction pour gérer la réservation
   const handleReservation = () => {
     if (!reservationDate) {
       alert("⚠️ Veuillez sélectionner une date avant de réserver.");
@@ -93,6 +67,84 @@ export default function JardinierDetailPage() {
     );
   };
 
+  const { user } = useAuth();
+  const { id } = useParams();
+  const router = useRouter();
+  const [jardinier, setJardinier] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [reservationDate, setReservationDate] = useState(null);
+  const [showContact, setShowContact] = useState(false);
+  const [newCompetence, setNewCompetence] = useState("");
+  const [competences, setCompetences] = useState([]);
+
+  // Récupérer le jardinier
+  useEffect(() => {
+    if (id) {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/jardiniers/${id}`)
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        })
+        .then((data) => {
+          setJardinier(data);
+          setLoading(false);
+        })
+        .catch((err) => {
+          setLoading(false);
+        });
+    }
+  }, [id]);
+
+  // Récupérer les compétences depuis l’API
+  const fetchCompetences = async () => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/utilisateur/${jardinier.id_utilisateur}/competences`);
+      if (!res.ok) throw new Error("Erreur récupération compétences");
+      const data = await res.json();
+      setCompetences(data);
+    } catch (err) {
+      setCompetences([]);
+    }
+  };
+
+  // Charger les compétences quand le jardinier est prêt
+  useEffect(() => {
+    if (jardinier && jardinier.id_utilisateur) {
+      fetchCompetences();
+    }
+  }, [jardinier]);
+
+  // Ajout d'une compétence
+  const handleAddCompetence = async () => {
+    if (!newCompetence.trim()) return;
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/utilisateur/${jardinier.id_utilisateur}/competences`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nom: newCompetence.trim() })
+      });
+      if (!res.ok) throw new Error("Erreur ajout compétence");
+      fetchCompetences();
+      setNewCompetence("");
+    } catch (err) {
+      alert("Erreur lors de l'ajout de la compétence");
+    }
+  };
+
+  // Suppression d'une compétence
+  const handleRemoveCompetence = async (id_competence) => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/utilisateur/${jardinier.id_utilisateur}/competences/${id_competence}`, {
+        method: "DELETE"
+      });
+      if (!res.ok) throw new Error("Erreur suppression compétence");
+      fetchCompetences();
+    } catch (err) {
+      alert("Erreur lors de la suppression de la compétence");
+    }
+  };
+
+  // Les returns conditionnels doivent être APRES tous les hooks et la logique
   if (loading) return <p className="text-center mt-20">⏳ Chargement...</p>;
   if (!jardinier) return <p className="text-center mt-20 text-red-600">❌ Jardinier introuvable.</p>;
 
@@ -118,7 +170,16 @@ export default function JardinierDetailPage() {
           <p className="text-sm text-gray-600">{jardinier.description}</p>
           <p className="text-sm text-gray-600">📍 {jardinier.localisation}</p>
           <p className="text-sm text-gray-600">🕒 {jardinier.disponibilites}</p>
-          <p className="text-sm text-pink-700">🌱 {jardinier.competences}</p>
+          <div className="mt-2">
+            <p className="text-sm text-pink-700 font-semibold mb-1">🌱 Compétences :</p>
+            <ul className="mb-2">
+              {competences.map((comp, idx) => (
+                <li key={comp.id_competence || idx} className="flex items-center gap-2 mb-1">
+                  <span>{comp.nom}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
           {/* Bouton contacter */}
           <button
             className="mt-3 px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded"
@@ -140,7 +201,7 @@ export default function JardinierDetailPage() {
                 </>
               ) : null}
               <Link
-                href={`/messages?to=${jardinier.id_utilisateur}`}
+                href={`/messagerie?to=${jardinier.id_utilisateur}&nom=${encodeURIComponent(`${jardinier.prenom || ''} ${jardinier.nom || ''}`.trim())}&id_jardinier=${jardinier.id_jardinier}`}
                 className="inline-block mt-1 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
                 onClick={() => setShowContact(false)}
               >

@@ -19,8 +19,8 @@ export default function ValidationReservationJardinsPage() {
   );
 
   const dateLine =
-    startDate && startTime
-      ? `${startDate} à ${startTime}${endTime ? ` – ${endTime}` : ""}`
+    startDate
+      ? `${startDate}${startTime ? ` à ${startTime}` : ""}${endDate ? ` au ${endDate}` : ""}${endTime ? ` – ${endTime}` : ""}`
       : "Non spécifiée";
 
   // Actions

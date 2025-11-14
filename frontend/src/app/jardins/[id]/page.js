@@ -150,7 +150,7 @@ export default function JardinPage() {
                 </>
               ) : null}
               <Link
-                href={`/messages?to=${jardin.utilisateur?.id_utilisateur}`}
+                href={`/messagerie?to=${jardin.utilisateur?.id_utilisateur}&nom=${encodeURIComponent(`${jardin.utilisateur?.prenom || ''} ${jardin.utilisateur?.nom || ''}`.trim())}`}
                 className="inline-block mt-1 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
                 onClick={() => setShowContact(false)}
               >

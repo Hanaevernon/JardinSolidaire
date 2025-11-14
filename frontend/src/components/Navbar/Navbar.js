@@ -107,12 +107,12 @@ const Navbar = () => {
               </Link>
             </li>
             <li>
-              <Link href="/messages" className="block" onClick={() => setMenuOpen(false)}>
+              <Link href="/messagerie" className="block" onClick={() => setMenuOpen(false)}>
                 Ma messagerie
               </Link>
             </li>
-            {/* Onglets différents selon le rôle */}
-            {user.role === "proprietaire" ? (
+           
+            {(user.role === "proprietaire" || user.role === "ami_du_vert") && (
               <>
                 <li>
                   <Link href="/demandes-recues" className="block" onClick={() => setMenuOpen(false)}>
@@ -125,22 +125,9 @@ const Navbar = () => {
                   </Link>
                 </li>
               </>
-            ) : (
-              <>
-                <li>
-                  <Link href="/mes-reservations-jardins" className="block" onClick={() => setMenuOpen(false)}>
-                    Mes réservations de jardins
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/mes-services" className="block" onClick={() => setMenuOpen(false)}>
-                    Mes services proposés
-                  </Link>
-                </li>
-              </>
             )}
             <li>
-              <Link href="/favorites" className="block" onClick={() => setMenuOpen(false)}>
+              <Link href="/mes-favoris" className="block" onClick={() => setMenuOpen(false)}>
                 Mes Favoris
               </Link>
             </li>

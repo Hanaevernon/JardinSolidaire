@@ -26,23 +26,33 @@ const DemandesRecuesPage = () => {
       const userData = JSON.parse(storedUser);
       setUser(userData);
       
-      // Vérifier que c'est bien un propriétaire
-      if (userData.role !== "proprietaire") {
+      // Autoriser propriétaire ET ami_du_vert
+      if (userData.role !== "proprietaire" && userData.role !== "ami_du_vert") {
         window.location.href = "/";
         return;
       }
-      
-      fetchDemandes(userData.id_utilisateur);
+
+      // Appel API selon le rôle
+      if (userData.role === "proprietaire") {
+        fetchDemandes(userData.id_utilisateur, "proprietaire");
+      } else if (userData.role === "ami_du_vert") {
+        fetchDemandes(userData.id_utilisateur, "jardinier");
+      }
     } else {
       window.location.href = "/connexion";
     }
   }, []);
 
-  const fetchDemandes = async (proprietaireId) => {
+  // roleType = "proprietaire" ou "jardinier"
+  const fetchDemandes = async (userId, roleType) => {
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/reservations/proprietaire/${proprietaireId}`
-      );
+      let url = "";
+      if (roleType === "proprietaire") {
+        url = `${process.env.NEXT_PUBLIC_API_URL}/reservations/proprietaire/${userId}`;
+      } else {
+        url = `${process.env.NEXT_PUBLIC_API_URL}/reservations/jardinier/${userId}`;
+      }
+      const response = await fetch(url);
       const data = await response.json();
       setDemandes(Array.isArray(data) ? data : []);
     } catch (error) {

@@ -2,6 +2,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faUser,
@@ -15,12 +16,23 @@ import {
   faLeaf,
 } from "@fortawesome/free-solid-svg-icons";
 
+import dynamic from "next/dynamic";
+const Calendar = dynamic(() => import("react-calendar"), { ssr: false });
+import 'react-calendar/dist/Calendar.css';
+
 const ProfilePage = () => {
+    // State pour l’ajout de compétence
+    const [newCompetence, setNewCompetence] = useState("");
   const [user, setUser] = useState(null);
   const [userDetails, setUserDetails] = useState(null);
   const [annonces, setAnnonces] = useState([]);
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedDates, setSelectedDates] = useState([]);
+  const [savingDates, setSavingDates] = useState(false);
+  const [jardinierAnnonce, setJardinierAnnonce] = useState(null);
+  const [favoris, setFavoris] = useState([]);
+
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -85,6 +97,19 @@ const ProfilePage = () => {
       const reservationsData = await reservationsResponse.json();
       setReservations(Array.isArray(reservationsData) ? reservationsData : []);
 
+      // Récupérer les favoris
+      try {
+        const favorisResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/favoris/${userId}`);
+        if (favorisResponse.ok) {
+          const favorisData = await favorisResponse.json();
+          setFavoris(Array.isArray(favorisData) ? favorisData : []);
+        } else {
+          setFavoris([]);
+        }
+      } catch (error) {
+        setFavoris([]);
+      }
+
       setLoading(false);
     } catch (error) {
       console.error("Erreur lors du chargement du profil:", error);
@@ -108,7 +133,49 @@ const ProfilePage = () => {
       alert("Erreur lors de la suppression.");
     }
   };
-
+  
+  useEffect(() => {
+    if (userDetails?.role === "ami_du_vert") {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/jardiniers?userId=${userDetails.id_utilisateur}`)
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data) && data.length > 0) {
+            setJardinierAnnonce(data[0]);
+            if (data[0].disponibilites) {
+              try {
+                const dates = JSON.parse(data[0].disponibilites);
+                setSelectedDates(dates.map(d => new Date(d)));
+              } catch {
+                setSelectedDates([]);
+              }
+            }
+          }
+        });
+    }
+  }, [userDetails]);
+  
+  const handleSaveDates = async () => {
+  if (!jardinierAnnonce || selectedDates.length === 0) return;
+  setSavingDates(true);
+  try {
+    // Format dates en YYYY-MM-DD
+    const datesToSave = selectedDates.map(d => d.toISOString().slice(0, 10));
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/disponibilites`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id_jardinier: jardinierAnnonce.id_jardinier,
+        dates: datesToSave
+      })
+    });
+    if (!res.ok) throw new Error("Erreur sauvegarde disponibilités");
+    // Optionnel : feedback utilisateur ou rechargement
+  } catch (err) {
+    alert("Erreur lors de la sauvegarde des disponibilités");
+  } finally {
+    setSavingDates(false);
+  }
+};
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 pt-20 flex items-center justify-center">
@@ -224,13 +291,44 @@ const ProfilePage = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Ajout/Suppression compétences pour ami_du_vert */}
+                {userDetails.role === "ami_du_vert" && (
+                  <div className="mb-4 flex gap-2 items-center">
+                    <input
+                      type="text"
+                      value={newCompetence}
+                      onChange={e => setNewCompetence(e.target.value)}
+                      placeholder="Ajouter une compétence"
+                      className="border px-2 py-1 rounded"
+                    />
+                    <button
+                      className="px-3 py-1 bg-green-600 text-white rounded"
+                      onClick={async () => {
+                        if (!newCompetence.trim()) return;
+                        try {
+                          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/utilisateur/${userDetails.id_utilisateur}/competences`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ nom: newCompetence.trim() })
+                          });
+                          if (!res.ok) throw new Error("Erreur ajout compétence");
+                          setNewCompetence("");
+                          // Recharger les compétences
+                          fetchUserProfile(userDetails.id_utilisateur);
+                        } catch (err) {
+                          alert("Erreur lors de l'ajout de la compétence");
+                        }
+                      }}
+                    >Ajouter</button>
+                  </div>
+                )}
                 {Array.isArray(annonces) && annonces.map((item) => (
                   <div
                     key={item.id_jardin || item.id_competence || item.id_annonce || Math.random()}
-                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow flex items-center justify-between"
                   >
                     {userDetails.role === "proprietaire" ? (
-                      // Affichage pour les jardins
+                      // ...affichage jardins inchangé...
                       <>
                         <h3 className="font-semibold text-gray-800 mb-2">
                           {item.titre}
@@ -264,14 +362,27 @@ const ProfilePage = () => {
                       </>
                     ) : (
                       // Affichage pour les compétences
-                      <>
-                        <div className="text-center py-4">
-                          <FontAwesomeIcon icon={faLeaf} className="text-green-600 text-2xl mb-2" />
-                          <h3 className="font-semibold text-gray-800">
-                            {item.nom}
-                          </h3>
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center gap-2">
+                          <FontAwesomeIcon icon={faLeaf} className="text-green-600 text-2xl" />
+                          <span className="font-semibold text-gray-800">{item.nom}</span>
                         </div>
-                      </>
+                        <button
+                          className="px-2 py-1 bg-red-500 text-white rounded text-xs"
+                          onClick={async () => {
+                            try {
+                              const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/utilisateur/${userDetails.id_utilisateur}/competences/${item.id_competence}`, {
+                                method: "DELETE"
+                              });
+                              if (!res.ok) throw new Error("Erreur suppression compétence");
+                              // Recharger les compétences
+                              fetchUserProfile(userDetails.id_utilisateur);
+                            } catch (err) {
+                              alert("Erreur lors de la suppression de la compétence");
+                            }
+                          }}
+                        >Supprimer</button>
+                      </div>
                     )}
                   </div>
                 ))}
@@ -389,7 +500,7 @@ const ProfilePage = () => {
                 icon={faHeart}
                 className="text-red-600 text-3xl mb-2"
               />
-              <h3 className="text-2xl font-bold text-gray-800">0</h3>
+              <h3 className="text-2xl font-bold text-gray-800">{favoris.length}</h3>
               <p className="text-gray-600">Favoris reçus</p>
             </div>
           </div>
@@ -397,36 +508,94 @@ const ProfilePage = () => {
 
         {/* Statistiques pour ami du vert */}
         {userDetails.role === "ami_du_vert" && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-            <div className="bg-white rounded-lg shadow-md p-6 text-center">
-              <FontAwesomeIcon
-                icon={faLeaf}
-                className="text-green-600 text-3xl mb-2"
-              />
-              <h3 className="text-2xl font-bold text-gray-800">{annonces.length}</h3>
-              <p className="text-gray-600">Compétences définies</p>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+              <div className="bg-white rounded-lg shadow-md p-6 text-center">
+                <FontAwesomeIcon
+                  icon={faLeaf}
+                  className="text-green-600 text-3xl mb-2"
+                />
+                <h3 className="text-2xl font-bold text-gray-800">{annonces.length}</h3>
+                <p className="text-gray-600">Compétences définies</p>
+              </div>
+              <div className="bg-white rounded-lg shadow-md p-6 text-center">
+                <FontAwesomeIcon
+                  icon={faCalendarAlt}
+                  className="text-blue-600 text-3xl mb-2"
+                />
+                <h3 className="text-2xl font-bold text-gray-800">{reservations.length}</h3>
+                <p className="text-gray-600">Jardins réservés</p>
+              </div>
+              <div className="bg-white rounded-lg shadow-md p-6 text-center">
+                <FontAwesomeIcon
+                  icon={faHeart}
+                  className="text-red-600 text-3xl mb-2"
+                />
+                <h3 className="text-2xl font-bold text-gray-800">{favoris.length}</h3>
+                <p className="text-gray-600">Jardins favoris</p>
+              </div>
             </div>
-            <div className="bg-white rounded-lg shadow-md p-6 text-center">
-              <FontAwesomeIcon
-                icon={faCalendarAlt}
-                className="text-blue-600 text-3xl mb-2"
+
+            {/* Encart calendrier de disponibilités */}
+            <div className="bg-white rounded-lg shadow-md p-6 mt-8">
+              <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <FontAwesomeIcon icon={faCalendarAlt} className="mr-2 text-green-600" />
+                Mes disponibilités
+              </h2>
+              <p className="text-gray-600 mb-4">Sélectionnez les dates où vous êtes disponible pour jardiner. Ces dates seront visibles par les propriétaires.</p>
+              <Calendar
+                onClickDay={date => {
+                  setSelectedDates(prev => {
+                    const exists = prev.some(d => d.toDateString() === date.toDateString());
+                    if (exists) {
+                      // Retirer la date si déjà sélectionnée
+                      return prev.filter(d => d.toDateString() !== date.toDateString());
+                    } else {
+                      // Ajouter la date
+                      return [...prev, date];
+                    }
+                  });
+                }}
+                value={null}
+                selectRange={false}
+                tileClassName={({ date, view }) =>
+                  selectedDates?.some(d => d.toDateString() === date.toDateString())
+                    ? "bg-green-200 text-green-900 font-bold"
+                    : ""
+                }
+                locale="fr-FR"
+                minDate={new Date()}
+                showNeighboringMonth={false}
+                showWeekNumbers={true}
+                allowPartialRange={false}
               />
-              <h3 className="text-2xl font-bold text-gray-800">{reservations.length}</h3>
-              <p className="text-gray-600">Jardins réservés</p>
+              <div className="mt-4">
+                <h3 className="font-semibold text-gray-700 mb-2">Dates sélectionnées :</h3>
+                {selectedDates && selectedDates.length > 0 ? (
+                  <ul className="list-disc ml-6 text-green-700">
+                    {selectedDates.map((date, idx) => (
+                      <li key={idx}>{date.toLocaleDateString()}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-gray-500">Aucune date sélectionnée.</p>
+                )}
+                <button
+                  className="mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+                  onClick={handleSaveDates}
+                  disabled={savingDates || !jardinierAnnonce}
+                >
+                  {savingDates ? "Sauvegarde..." : "Sauvegarder mes disponibilités"}
+                </button>
+              </div>
             </div>
-            <div className="bg-white rounded-lg shadow-md p-6 text-center">
-              <FontAwesomeIcon
-                icon={faHeart}
-                className="text-red-600 text-3xl mb-2"
-              />
-              <h3 className="text-2xl font-bold text-gray-800">0</h3>
-              <p className="text-gray-600">Jardins favoris</p>
-            </div>
-          </div>
+          </>
         )}
       </div>
     </div>
   );
+// State pour calendrier de disponibilités (ami du vert)
+// (déjà déplacé en haut du composant)
 }
 
 export default ProfilePage;
