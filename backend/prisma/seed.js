@@ -27,6 +27,19 @@ async function seedUtilisateur() {
   await prisma.utilisateur.createMany({
     data: [
       {
+        nom: 'Vernon',
+        prenom: 'Hanaë',
+        email: 'hanae@example.com',
+        mot_de_passe: 'testhanae',
+        role: 'ami_du_vert',
+        photo_profil: 'https://randomuser.me/api/portraits/women/44.jpg',
+        biographie: "J'adore jardiner et partager mes astuces !",
+        date_inscription: new Date(),
+        telephone: '0606060606',
+        adresse: '1 rue du Jardin, Nantes',
+        note_moyenne: 5.0,
+      },
+      {
         nom: 'Dupont',
         prenom: 'Alice',
         email: 'alice@example.com',
@@ -252,10 +265,75 @@ async function seedJardiniers() {
   console.log('✅ Annonces de jardiniers insérées avec succès !');
 };
 
+// Seed pour la messagerie
+async function seedMessagerie() {
+  // On prend Alice (ami_du_vert) et Lucas (proprietaire)
+  const alice = await prisma.utilisateur.findUnique({ where: { email: 'alice@example.com' } });
+  const lucas = await prisma.utilisateur.findUnique({ where: { email: 'lucas@example.com' } });
+  const hugo = await prisma.utilisateur.findUnique({ where: { email: 'hugo@example.com' } });
+  const emma = await prisma.utilisateur.findUnique({ where: { email: 'emma@example.com' } });
+  const hanae = await prisma.utilisateur.findUnique({ where: { email: 'hanae@example.com' } });
+
+  if (!alice || !lucas || !hugo || !emma || !hanae) {
+    throw new Error("Certains utilisateurs n'existent pas pour la seed messagerie.");
+  }
+
+  await prisma.messagerie.createMany({
+    data: [
+      {
+        id_envoyeur: alice.id_utilisateur,
+        id_destinataire: lucas.id_utilisateur,
+        contenu: "Bonjour Lucas, j'aimerais jardiner dans votre jardin !",
+        date_envoi: new Date(),
+        lu: false
+      },
+      {
+        id_envoyeur: lucas.id_utilisateur,
+        id_destinataire: alice.id_utilisateur,
+        contenu: "Bonjour Alice, avec plaisir ! Quand souhaitez-vous venir ?",
+        date_envoi: new Date(),
+        lu: false
+      },
+      {
+        id_envoyeur: emma.id_utilisateur,
+        id_destinataire: hugo.id_utilisateur,
+        contenu: "Bonjour Hugo, votre potager m'intéresse beaucoup.",
+        date_envoi: new Date(),
+        lu: false
+      },
+      {
+        id_envoyeur: hugo.id_utilisateur,
+        id_destinataire: emma.id_utilisateur,
+        contenu: "Merci Emma, je peux vous faire visiter samedi prochain !",
+        date_envoi: new Date(),
+        lu: false
+      },
+      // Ajout d'un message envoyé par Hanaë à Alice
+      {
+        id_envoyeur: hanae.id_utilisateur,
+        id_destinataire: alice.id_utilisateur,
+        contenu: "Bonjour Alice, c'est Hanaë ! On peut discuter ici.",
+        date_envoi: new Date(),
+        lu: false
+      }
+    ]
+  });
+  console.log('✅ Messages de test insérés dans la messagerie !');
+}
+
 async function main() {
   console.log("👉 Lancement de main()");
 
- 
+  // Nettoyage des tables principales (ordre pour respecter les contraintes de clés étrangères)
+  await prisma.messagerie.deleteMany();
+  await prisma.reservation.deleteMany();
+  await prisma.jardiniers.deleteMany();
+  await prisma.jardin.deleteMany();
+  await prisma.utilisateurCompetence.deleteMany();
+  await prisma.competence.deleteMany();
+  await prisma.utilisateur.deleteMany();
+
+  console.log('🧹 Tables principales vidées.');
 
   await seedCompetences();
   console.log("✅ seedCompetences terminé");
@@ -271,6 +349,8 @@ async function main() {
 
   await seedReservation();
   console.log("✅ seedReservation terminé");
+  await seedMessagerie();
+  console.log("✅ seedMessagerie terminé");
 }
 
 main()

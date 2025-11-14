@@ -275,4 +275,75 @@ router.get("/proprietaire/:proprietaireId", async (req, res) => {
   }
 });
 
+
+// 🔹 GET réservations reçues par un jardinier (ami du vert)
+router.get("/jardinier/:userId", async (req, res) => {
+  const { userId } = req.params;
+  try {
+    // On récupère les annonces de jardinier créées par cet utilisateur
+    const annoncesJardinier = await prisma.jardiniers.findMany({
+      where: {
+        id_utilisateur: BigInt(userId)
+      },
+      select: {
+        id_jardinier: true,
+        titre: true,
+        localisation: true
+      }
+    });
+
+    const idsJardinier = annoncesJardinier.map(a => a.id_jardinier);
+    if (idsJardinier.length === 0) {
+      return res.json([]); // Aucun jardinier, aucune réservation reçue
+    }
+
+    // On récupère les réservations qui concernent ces annonces de jardinier
+    const reservations = await prisma.reservation.findMany({
+      where: {
+        id_jardin: null, // On suppose que les réservations sur jardinier ont id_jardin null
+        // Si vous avez un champ id_jardinier dans reservation, adaptez ici
+        // id_jardinier: { in: idsJardinier }
+      },
+      include: {
+        utilisateur: {
+          select: {
+            prenom: true,
+            nom: true,
+            email: true,
+            telephone: true
+          }
+        }
+      },
+      orderBy: {
+        date_reservation: 'desc'
+      }
+    });
+
+    // Ajout des infos de l'annonce jardinier à chaque réservation
+    const reservationsJSON = reservations.map(r => {
+      // Trouver l'annonce correspondante si possible
+      // Si vous avez un champ id_jardinier dans reservation, utilisez-le ici
+      // const annonce = annoncesJardinier.find(a => a.id_jardinier === r.id_jardinier);
+      return {
+        id_reservation: r.id_reservation.toString(),
+        id_utilisateur: r.id_utilisateur.toString(),
+        statut: r.statut,
+        date_reservation: r.date_reservation,
+        commentaires: r.commentaires,
+        client_prenom: r.utilisateur?.prenom || null,
+        client_nom: r.utilisateur?.nom || null,
+        client_email: r.utilisateur?.email || null,
+        client_telephone: r.utilisateur?.telephone || null,
+        // titre_annonce: annonce?.titre || null,
+        // localisation: annonce?.localisation || null
+      };
+    });
+
+    res.json(reservationsJSON);
+  } catch (err) {
+    console.error("❌ Erreur récupération réservations jardinier :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
 module.exports = router;

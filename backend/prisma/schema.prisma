@@ -69,6 +69,8 @@ model jardin {
   disponibilites   disponibilites[]
   utilisateur      utilisateur       @relation(fields: [id_proprietaire], references: [id_utilisateur], onDelete: NoAction, onUpdate: NoAction)
   reservation      reservation[]
+  // Favoris
+  favoris favoris[] @relation("jardinFavoris")
 }
 
 /// Table pour les annonces de jardiniers (ami_du_vert)
@@ -86,6 +88,8 @@ model jardiniers {
 
   // Relations
   utilisateur       utilisateur @relation(fields: [id_utilisateur], references: [id_utilisateur], onDelete: NoAction, onUpdate: NoAction)
+  // Favoris
+  favoris favoris[] @relation("jardinierFavoris")
 }
 
 model messagerie {
@@ -137,6 +141,8 @@ model utilisateur {
   messagerie_messagerie_id_envoyeurToutilisateur     messagerie[]     @relation("messagerie_id_envoyeurToutilisateur")
   reservation                                        reservation[]
   competences                                        utilisateurCompetence[]
+  // Favoris
+  favoris favoris[] @relation("utilisateurFavoris")
 }
 
 model competence {
@@ -151,4 +157,20 @@ model utilisateurCompetence {
   id_utilisateur       BigInt
   competence           competence       @relation(fields: [id_competence], references: [id_competence])
   id_competence        Int
+}
+
+/// Table pour les favoris (jardin ou jardinier)
+model favoris {
+  id_favoris      BigInt        @id @default(autoincrement())
+  id_utilisateur  BigInt
+  id_jardin       BigInt?       // Nullable si c'est un favori jardinier
+  id_jardinier    BigInt?       // Nullable si c'est un favori jardin
+  date_ajout      DateTime?     @default(now()) @db.Timestamptz(6)
+
+  utilisateur utilisateur @relation("utilisateurFavoris", fields: [id_utilisateur], references: [id_utilisateur], onDelete: NoAction, onUpdate: NoAction)
+  jardin jardin? @relation("jardinFavoris", fields: [id_jardin], references: [id_jardin], onDelete: NoAction, onUpdate: NoAction)
+  jardinier jardiniers? @relation("jardinierFavoris", fields: [id_jardinier], references: [id_jardinier], onDelete: NoAction, onUpdate: NoAction)
+  
+  @@unique([id_utilisateur, id_jardin], name: "unique_favori_jardin")
+  @@unique([id_utilisateur, id_jardinier], name: "unique_favori_jardinier")
 }
