@@ -73,6 +73,8 @@ export default function JardinierDetailPage() {
   const [jardinier, setJardinier] = useState(null);
   const [loading, setLoading] = useState(true);
   const [reservationDate, setReservationDate] = useState(null);
+    const [selectedCreneau, setSelectedCreneau] = useState(null);
+  const [disponibilites, setDisponibilites] = useState([]);
   const [showContact, setShowContact] = useState(false);
   const [newCompetence, setNewCompetence] = useState("");
   const [competences, setCompetences] = useState([]);
@@ -87,6 +89,7 @@ export default function JardinierDetailPage() {
         })
         .then((data) => {
           setJardinier(data);
+          setDisponibilites(data.disponibilites_jardinier || []);
           setLoading(false);
         })
         .catch((err) => {
@@ -162,14 +165,13 @@ export default function JardinierDetailPage() {
         />
         <div>
           <h1 className="text-2xl font-bold text-green-800">{jardinier.titre}</h1>
-          {jardinier.prenom || jardinier.nom ? (
-            <p className="text-lg font-semibold text-green-700 mb-1">
-              {jardinier.prenom} {jardinier.nom}
-            </p>
-          ) : null}
-          <p className="text-sm text-gray-600">{jardinier.description}</p>
-          <p className="text-sm text-gray-600">📍 {jardinier.localisation}</p>
-          <p className="text-sm text-gray-600">🕒 {jardinier.disponibilites}</p>
+          <p className="text-lg font-semibold text-green-700 mb-1">{jardinier.prenom} {jardinier.nom}</p>
+          <p className="text-sm text-gray-600 font-semibold mb-1">{jardinier.description}</p>
+          <p className="text-sm text-gray-600 font-semibold mb-1">📍 {jardinier.localisation}</p>
+          {jardinier.email && <p className="text-sm text-gray-600 font-semibold mb-1">✉️ {jardinier.email}</p>}
+          {jardinier.telephone && <p className="text-sm text-gray-600 font-semibold mb-1">📞 {jardinier.telephone}</p>}
+          {jardinier.note_moyenne && <p className="text-sm text-gray-600 font-semibold mb-1">⭐ {jardinier.note_moyenne}</p>}
+          {jardinier.biographie && <p className="text-sm text-gray-600 font-semibold mb-1">📝 {jardinier.biographie}</p>}
           <div className="mt-2">
             <p className="text-sm text-pink-700 font-semibold mb-1">🌱 Compétences :</p>
             <ul className="mb-2">
@@ -219,14 +221,102 @@ export default function JardinierDetailPage() {
         </h2>
         <DatePicker
           selected={reservationDate}
-          onChange={(date) => setReservationDate(date)}
+          onChange={(date) => {
+            const isoDate = date.toISOString().slice(0, 10);
+            const isDispo = disponibilites.some(d => d.date_dispo?.slice(0, 10) === isoDate);
+            if (isDispo) {
+              setReservationDate(date);
+              setSelectedCreneau(null);
+            }
+          }}
           inline
           minDate={new Date()}
+          dayClassName={date => {
+            const isoDate = date.toISOString().slice(0, 10);
+            const isDispo = disponibilites.some(d => d.date_dispo?.slice(0, 10) === isoDate);
+            return isDispo
+              ? 'react-datepicker__day--selected bg-green-200 text-green-900 font-bold rounded-full'
+              : 'bg-gray-100 text-gray-400 cursor-not-allowed';
+          }}
         />
+        <style jsx global>{`
+          .react-datepicker__day--selected.bg-green-200 {
+            background-color: #bbf7d0 !important;
+            color: #166534 !important;
+            border-radius: 50%;
+            font-weight: bold;
+          }
+          .react-datepicker__day.bg-gray-100 {
+            background-color: #f3f4f6 !important;
+            color: #9ca3af !important;
+            border-radius: 50%;
+          }
+        `}</style>
+        {/* Affichage des créneaux horaires pour la date sélectionnée */}
+        {reservationDate && (
+          <div className="mt-6">
+            <h3 className="text-md font-semibold text-green-700 mb-2">Créneaux disponibles pour le {reservationDate.toLocaleDateString()} :</h3>
+            {(() => {
+              const isoDate = reservationDate.toISOString().slice(0, 10);
+              const creneaux = disponibilites.filter(d => d.date_dispo?.slice(0, 10) === isoDate);
+              if (creneaux.length === 0) {
+                return <p className="text-gray-500">Aucun créneau disponible ce jour.</p>;
+              }
+              return (
+                <ul className="ml-2">
+                  {creneaux.map((cr, idx) => (
+                    <li key={idx} className="mb-2">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="creneau"
+                          value={cr.id_disponibilite || `${cr.heure_debut}-${cr.heure_fin}`}
+                          checked={selectedCreneau === (cr.id_disponibilite || `${cr.heure_debut}-${cr.heure_fin}`)}
+                          onChange={() => setSelectedCreneau(cr.id_disponibilite || `${cr.heure_debut}-${cr.heure_fin}`)}
+                        />
+                        <span className="text-gray-700">{cr.heure_debut?.slice(0,5)} - {cr.heure_fin?.slice(0,5)}</span>
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+              );
+            })()}
+          </div>
+        )}
       </div>
 
+            {/* Affichage des disponibilités et plages horaires */}
+            {/* <div className="bg-gray-50 rounded-lg shadow-md p-6 mb-6">
+              <h2 className="text-lg font-bold text-green-800 mb-2">Disponibilités du jardinier</h2>
+              {disponibilites && disponibilites.length > 0 ? (
+                <ul className="ml-2">
+                  {disponibilites.map((dispo, idx) => (
+                    <li key={idx} className="mb-2">
+                      <span className="font-bold text-green-700">{new Date(dispo.date_dispo).toLocaleDateString()}</span>
+                      {dispo.heure_debut && dispo.heure_fin && (
+                        <span className="ml-2 text-gray-700">{dispo.heure_debut.slice(0,5)} - {dispo.heure_fin.slice(0,5)}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-gray-500">Aucune disponibilité renseignée.</p>
+              )}
+            </div> */}
       <button
-        onClick={handleReservation}
+        onClick={() => {
+          if (!reservationDate) {
+            alert("⚠️ Veuillez sélectionner une date avant de réserver.");
+            return;
+          }
+          if (!selectedCreneau) {
+            alert("⚠️ Veuillez sélectionner un créneau horaire.");
+            return;
+          }
+          router.push(
+            `/reservation_jardiniers?id=${id}&date=${reservationDate.toISOString()}&creneau=${selectedCreneau}`
+          );
+        }}
         className="mt-4 bg-[#e3107d] hover:bg-pink-800 text-white px-6 py-3 rounded-full font-semibold transition"
       >
         Réserver ce jardinier

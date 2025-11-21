@@ -209,6 +209,13 @@ router.get("/:id", async (req, res) => {
       ? JSON.parse(jardinier.photos)
       : [];
 
+    // 🔹 Ajout des disponibilités du jardinier
+    const dispoResult = await pool.query(
+      `SELECT * FROM disponibilites WHERE id_jardin = $1 ORDER BY date_dispo ASC`,
+      [jardinier.id_jardinier]
+    );
+    jardinier.disponibilites_jardinier = dispoResult.rows;
+
     res.json(jardinier);
   } catch (error) {
     console.error("❌ Erreur récupération jardinier :", error);

@@ -16,11 +16,12 @@ import {
   faLeaf,
 } from "@fortawesome/free-solid-svg-icons";
 
-import dynamic from "next/dynamic";
-const Calendar = dynamic(() => import("react-calendar"), { ssr: false });
-import 'react-calendar/dist/Calendar.css';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 const ProfilePage = () => {
+      const [selectedDate, setSelectedDate] = useState(null);
+      const [selectedHoraire, setSelectedHoraire] = useState(null);
     // State pour l’ajout de compétence
     const [newCompetence, setNewCompetence] = useState("");
   const [user, setUser] = useState(null);
@@ -29,6 +30,8 @@ const ProfilePage = () => {
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedDates, setSelectedDates] = useState([]);
+  // Plages horaires par date : { 'YYYY-MM-DD': [{heureDebut, heureFin}, ...] }
+  const [plagesHoraires, setPlagesHoraires] = useState({});
   const [savingDates, setSavingDates] = useState(false);
   const [jardinierAnnonce, setJardinierAnnonce] = useState(null);
   const [favoris, setFavoris] = useState([]);
@@ -143,10 +146,15 @@ const ProfilePage = () => {
             setJardinierAnnonce(data[0]);
             if (data[0].disponibilites) {
               try {
-                const dates = JSON.parse(data[0].disponibilites);
-                setSelectedDates(dates.map(d => new Date(d)));
+                const dispo = JSON.parse(data[0].disponibilites);
+                // dispo = [{date: 'YYYY-MM-DD', plages: [{heureDebut, heureFin}]}]
+                setSelectedDates(dispo.map(d => new Date(d.date)));
+                const plages = {};
+                dispo.forEach(d => { plages[d.date] = d.plages || []; });
+                setPlagesHoraires(plages);
               } catch {
                 setSelectedDates([]);
+                setPlagesHoraires({});
               }
             }
           }
@@ -158,14 +166,20 @@ const ProfilePage = () => {
   if (!jardinierAnnonce || selectedDates.length === 0) return;
   setSavingDates(true);
   try {
-    // Format dates en YYYY-MM-DD
-    const datesToSave = selectedDates.map(d => d.toISOString().slice(0, 10));
+    // Format [{date: 'YYYY-MM-DD', plages: [{heureDebut, heureFin}]}]
+    const dispoToSave = selectedDates.map(d => {
+      const dateStr = d.toISOString().slice(0, 10);
+      return {
+        date: dateStr,
+        plages: plagesHoraires[dateStr] || []
+      };
+    });
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/disponibilites`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         id_jardinier: jardinierAnnonce.id_jardinier,
-        dates: datesToSave
+        disponibilites: dispoToSave
       })
     });
     if (!res.ok) throw new Error("Erreur sauvegarde disponibilités");
@@ -542,43 +556,92 @@ const ProfilePage = () => {
                 <FontAwesomeIcon icon={faCalendarAlt} className="mr-2 text-green-600" />
                 Mes disponibilités
               </h2>
-              <p className="text-gray-600 mb-4">Sélectionnez les dates où vous êtes disponible pour jardiner. Ces dates seront visibles par les propriétaires.</p>
-              <Calendar
-                onClickDay={date => {
-                  setSelectedDates(prev => {
-                    const exists = prev.some(d => d.toDateString() === date.toDateString());
-                    if (exists) {
-                      // Retirer la date si déjà sélectionnée
-                      return prev.filter(d => d.toDateString() !== date.toDateString());
-                    } else {
-                      // Ajouter la date
-                      return [...prev, date];
-                    }
-                  });
-                }}
-                value={null}
-                selectRange={false}
-                tileClassName={({ date, view }) =>
-                  selectedDates?.some(d => d.toDateString() === date.toDateString())
-                    ? "bg-green-200 text-green-900 font-bold"
-                    : ""
-                }
-                locale="fr-FR"
+              <p className="text-gray-600 mb-4">Cliquez sur une date pour voir/modifier les horaires disponibles. Les dates en vert sont vos disponibilités.</p>
+              <DatePicker
+                selected={selectedDate}
+                onChange={date => setSelectedDate(date)}
+                inline
                 minDate={new Date()}
-                showNeighboringMonth={false}
-                showWeekNumbers={true}
-                allowPartialRange={false}
+                dayClassName={date => {
+                  const dateStr = date.toISOString().slice(0, 10);
+                  return plagesHoraires[dateStr]?.length > 0
+                    ? 'react-datepicker__day--selected bg-green-200 text-green-900 font-bold rounded-full'
+                    : 'bg-gray-100 text-gray-400 cursor-not-allowed';
+                }}
               />
+              <style jsx global>{`
+                .react-datepicker__day--selected.bg-green-200 {
+                  background-color: #bbf7d0 !important;
+                  color: #166534 !important;
+                  border-radius: 50%;
+                  font-weight: bold;
+                }
+                .react-datepicker__day.bg-gray-100 {
+                  background-color: #f3f4f6 !important;
+                  color: #9ca3af !important;
+                  border-radius: 50%;
+                }
+              `}</style>
+              {/* Affichage des horaires pour la date sélectionnée */}
               <div className="mt-4">
-                <h3 className="font-semibold text-gray-700 mb-2">Dates sélectionnées :</h3>
-                {selectedDates && selectedDates.length > 0 ? (
-                  <ul className="list-disc ml-6 text-green-700">
-                    {selectedDates.map((date, idx) => (
-                      <li key={idx}>{date.toLocaleDateString()}</li>
-                    ))}
-                  </ul>
+                {selectedDate ? (
+                  (() => {
+                    const dateStr = selectedDate.toISOString().slice(0, 10);
+                    const horaires = plagesHoraires[dateStr] || [];
+                    return (
+                      <>
+                        <h3 className="font-semibold text-gray-700 mb-2">Horaires pour le {selectedDate.toLocaleDateString()} :</h3>
+                        {horaires.length > 0 ? (
+                          <ul className="ml-2">
+                            {horaires.map((plage, i) => (
+                              <li key={i} className="mb-2 flex items-center gap-2">
+                                <input
+                                  type="radio"
+                                  name="horaire"
+                                  value={`${plage.heureDebut}-${plage.heureFin}`}
+                                  checked={selectedHoraire === `${plage.heureDebut}-${plage.heureFin}`}
+                                  onChange={() => setSelectedHoraire(`${plage.heureDebut}-${plage.heureFin}`)}
+                                />
+                                <span className="text-gray-700">{plage.heureDebut} - {plage.heureFin}</span>
+                                <button className="text-red-500 text-xs" onClick={() => {
+                                  setPlagesHoraires(prev => {
+                                    const arr = [...(prev[dateStr] || [])];
+                                    arr.splice(i, 1);
+                                    return {...prev, [dateStr]: arr};
+                                  });
+                                }}>Supprimer</button>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-gray-500">Aucun horaire pour cette date.</p>
+                        )}
+                        <PlageHoraireForm
+                          onAdd={(heureDebut, heureFin) => {
+                            setPlagesHoraires(prev => {
+                              const arr = [...(prev[dateStr] || [])];
+                              arr.push({heureDebut, heureFin});
+                              return {...prev, [dateStr]: arr};
+                            });
+                          }}
+                        />
+                        <button
+                          className="mt-2 px-3 py-1 bg-red-100 text-red-700 rounded text-xs"
+                          onClick={() => {
+                            setSelectedDates(prev => prev.filter(d => d.toISOString().slice(0, 10) !== dateStr));
+                            setPlagesHoraires(prev => {
+                              const newPlages = {...prev};
+                              delete newPlages[dateStr];
+                              return newPlages;
+                            });
+                            setSelectedDate(null);
+                          }}
+                        >Supprimer cette date</button>
+                      </>
+                    );
+                  })()
                 ) : (
-                  <p className="text-gray-500">Aucune date sélectionnée.</p>
+                  <p className="text-gray-500">Cliquez sur une date pour voir/modifier les horaires.</p>
                 )}
                 <button
                   className="mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
@@ -595,6 +658,26 @@ const ProfilePage = () => {
     </div>
   );
 // State pour calendrier de disponibilités (ami du vert)
+// Formulaire pour ajouter une plage horaire à une date
+function PlageHoraireForm({ onAdd }) {
+  const [heureDebut, setHeureDebut] = useState("");
+  const [heureFin, setHeureFin] = useState("");
+  return (
+    <form className="flex items-center gap-2 mt-2" onSubmit={e => {
+      e.preventDefault();
+      if (heureDebut && heureFin && heureDebut < heureFin) {
+        onAdd(heureDebut, heureFin);
+        setHeureDebut("");
+        setHeureFin("");
+      }
+    }}>
+      <input type="time" value={heureDebut} onChange={e => setHeureDebut(e.target.value)} className="border rounded px-2 py-1" required />
+      <span>-</span>
+      <input type="time" value={heureFin} onChange={e => setHeureFin(e.target.value)} className="border rounded px-2 py-1" required />
+      <button type="submit" className="bg-green-500 text-white px-2 py-1 rounded text-xs">Ajouter</button>
+    </form>
+  );
+}
 // (déjà déplacé en haut du composant)
 }
 
