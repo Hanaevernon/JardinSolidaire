@@ -1,9 +1,9 @@
 // This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 generator client {
   provider = "prisma-client-js"
 }
@@ -112,6 +112,7 @@ model reservation {
   statut           String?
   date_reservation DateTime?       @default(now()) @db.Timestamptz(6)
   commentaires     String?
+  creneaux         Json?           @db.Json
   disponibilites   disponibilites? @relation(fields: [id_disponibilite], references: [id_disponibilite], onDelete: NoAction, onUpdate: NoAction)
   jardin           jardin?         @relation(fields: [id_jardin], references: [id_jardin], onDelete: NoAction, onUpdate: NoAction)
   utilisateur      utilisateur?    @relation(fields: [id_utilisateur], references: [id_utilisateur], onDelete: NoAction, onUpdate: NoAction)
@@ -140,9 +141,12 @@ model utilisateur {
   messagerie_messagerie_id_destinataireToutilisateur messagerie[]     @relation("messagerie_id_destinataireToutilisateur")
   messagerie_messagerie_id_envoyeurToutilisateur     messagerie[]     @relation("messagerie_id_envoyeurToutilisateur")
   reservation                                        reservation[]
-  competences                                        utilisateurCompetence[]
+  demandes_envoyees demande[] @relation("DemandeEnvoyee")
+  demandes_recues   demande[] @relation("DemandeRecue")
+  utilisateurCompetence utilisateurCompetence[]
   // Favoris
   favoris favoris[] @relation("utilisateurFavoris")
+
 }
 
 model competence {
@@ -173,4 +177,17 @@ model favoris {
   
   @@unique([id_utilisateur, id_jardin], name: "unique_favori_jardin")
   @@unique([id_utilisateur, id_jardinier], name: "unique_favori_jardinier")
+}
+
+/// Table pour les demandes entre utilisateurs
+model demande {
+  id_demande      BigInt      @id @default(autoincrement())
+  id_utilisateur  BigInt
+  id_destinataire BigInt
+  contenu         String?
+  statut          String?     // 'en_attente', 'acceptee', 'refusee', etc.
+  date_demande    DateTime?   @default(now()) @db.Timestamptz(6)
+
+  envoyeur        utilisateur @relation("DemandeEnvoyee", fields: [id_utilisateur], references: [id_utilisateur])
+  destinataire    utilisateur @relation("DemandeRecue", fields: [id_destinataire], references: [id_utilisateur])
 }

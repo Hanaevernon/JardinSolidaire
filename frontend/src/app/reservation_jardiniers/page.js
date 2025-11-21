@@ -11,6 +11,26 @@ export default function ReservationJardinierPage() {
   const [jardinier, setJardinier] = useState(null);
   const [commentaire, setCommentaire] = useState("");
   const [confirmationMessage, setConfirmationMessage] = useState("");
+  const [selectedSlots, setSelectedSlots] = useState([]);
+  // Créneaux horaires proposés
+  const slots = [
+    { id: 1, label: '08h00 - 09h00' },
+    { id: 2, label: '09h00 - 10h00' },
+    { id: 3, label: '10h00 - 11h00' },
+    { id: 4, label: '11h00 - 12h00' },
+    { id: 5, label: '14h00 - 15h00' },
+    { id: 6, label: '15h00 - 16h00' },
+    { id: 7, label: '16h00 - 17h00' },
+  ];
+
+  // Sélection/déselection d'un créneau
+  const handleSlotChange = (slotId) => {
+    setSelectedSlots((prev) =>
+      prev.includes(slotId)
+        ? prev.filter((id) => id !== slotId)
+        : [...prev, slotId]
+    );
+  };
 
   useEffect(() => {
     if (id) {
@@ -41,6 +61,7 @@ export default function ReservationJardinierPage() {
           date_reservation: dateParam,
           statut: "en_attente",
           commentaires: commentaire,
+          creneaux: selectedSlots.map((slotId) => slots.find((s) => s.id === slotId)?.label),
         }),
       });
 
@@ -87,6 +108,22 @@ export default function ReservationJardinierPage() {
         </span>
       </p>
 
+      <div className="mb-4">
+        <div className="font-semibold mb-2">Sélectionne tes créneaux horaires :</div>
+        <div className="grid grid-cols-2 gap-2">
+          {slots.map((slot) => (
+            <label key={slot.id} className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={selectedSlots.includes(slot.id)}
+                onChange={() => handleSlotChange(slot.id)}
+              />
+              <span>{slot.label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
       <textarea
         value={commentaire}
         onChange={(e) => setCommentaire(e.target.value)}
@@ -98,6 +135,7 @@ export default function ReservationJardinierPage() {
       <button
         onClick={handleReservation}
         className="bg-[#e3107d] hover:bg-pink-800 text-white px-6 py-3 rounded-full font-semibold transition"
+        disabled={selectedSlots.length === 0}
       >
         Confirmer la réservation
       </button>

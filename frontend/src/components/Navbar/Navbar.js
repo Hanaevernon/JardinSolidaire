@@ -72,9 +72,9 @@ const Navbar = () => {
 
     if (user.role === "proprietaire") {
       return (
-        <Link href={hasAnnonce ? "/ajouter-jardin" : "/modifier-jardin"}>
+        <Link href="/ajouter-jardin">
           <button className="bg-[#e3107d] hover:bg-pink-700 text-white px-4 py-2 rounded">
-            {hasAnnonce ? "Ajouter mon jardin" : "Modifier mon jardin"}
+            Ajouter mon jardin
           </button>
         </Link>
       );
@@ -82,9 +82,9 @@ const Navbar = () => {
 
     if (user.role === "ami_du_vert") {
       return (
-        <Link href={hasAnnonce ? "/modifier-jardinier" : "/je-veux-jardiner"}>
+        <Link href="/je-veux-jardiner">
           <button className="bg-[#e3107d] hover:bg-pink-700 text-white px-4 py-2 rounded">
-            {hasAnnonce ? "Modifier mon annonce" : "Je veux jardiner"}
+            Je veux jardiner
           </button>
         </Link>
       );

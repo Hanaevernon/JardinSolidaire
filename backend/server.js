@@ -23,6 +23,8 @@ const messagerieRoutes = require("./routes/messagerie");
 const disponibilitesRoutes = require("./routes/disponibilites");
 const favorisRoutes = require("./routes/favoris");
 
+const notificationsRoutes = require("./routes/notifications");
+
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -58,6 +60,8 @@ app.use("/api/utilisateur", utilisateurRoute);
 
 app.use("/api/disponibilites", disponibilitesRoutes);
 app.use("/api/favoris", favorisRoutes);
+
+app.use("/api", notificationsRoutes);
 
 // --- 404 handler ---
 app.use((req, res, next) => {

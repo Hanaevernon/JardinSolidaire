@@ -50,7 +50,7 @@ router.get("/", async (req, res) => {
 
 // ✅ Créer une réservation (jardin OU jardinier)
 router.post("/", async (req, res) => {
-  const { id_utilisateur, id_jardin, id_jardinier, date_reservation, statut, commentaires } = req.body;
+  const { id_utilisateur, id_jardin, id_jardinier, date_reservation, statut, commentaires, creneaux } = req.body;
 
   if (!id_utilisateur || (!id_jardin && !id_jardinier)) {
     return res.status(400).json({ error: "id_utilisateur + (id_jardin OU id_jardinier) requis" });
@@ -65,7 +65,8 @@ router.post("/", async (req, res) => {
         id_jardin: id_jardin ? BigInt(id_jardin) : null,
         date_reservation: new Date(date_reservation),
         statut: statut || "en_attente",
-        commentaires: commentaires || null
+        commentaires: commentaires || null,
+        creneaux: creneaux ? creneaux : null
       }
     });
 
@@ -75,7 +76,8 @@ router.post("/", async (req, res) => {
       id_reservation: reservation.id_reservation.toString(),
       id_utilisateur: reservation.id_utilisateur.toString(),
       id_jardin: reservation.id_jardin?.toString() || null,
-      id_disponibilite: reservation.id_disponibilite?.toString() || null
+      id_disponibilite: reservation.id_disponibilite?.toString() || null,
+      creneaux: reservation.creneaux || []
     };
 
     res.status(201).json(reservationJSON);
@@ -168,6 +170,7 @@ router.get("/:id", async (req, res) => {
       statut: reservation.statut,
       date_reservation: reservation.date_reservation,
       commentaires: reservation.commentaires,
+      creneaux: reservation.creneaux || [],
       titre_annonce: reservation.jardin?.titre || null,
       adresse: reservation.jardin?.adresse || null,
       type: reservation.jardin?.type || null,

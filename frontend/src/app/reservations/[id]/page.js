@@ -214,7 +214,7 @@ const ReservationDetailPage = () => {
           {/* Dates de réservation */}
           <div className="mt-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              Période de réservation
+              Période et horaires réservés
             </h3>
             <div className="bg-blue-50 rounded-lg p-4">
               <div className="flex items-center justify-between">
@@ -240,6 +240,17 @@ const ReservationDetailPage = () => {
                   </p>
                 </div>
               </div>
+              {/* Créneaux horaires réservés */}
+              {reservation.creneaux && reservation.creneaux.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-sm text-gray-600 mb-1">Horaires réservés :</p>
+                  <ul className="list-disc list-inside text-green-700">
+                    {reservation.creneaux.map((c, idx) => (
+                      <li key={idx}>{c}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
 

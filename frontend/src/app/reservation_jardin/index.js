@@ -19,6 +19,26 @@ const ReservationPage = () => {
   const [editMode, setEditMode] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState("");
   const [commentaire, setCommentaire] = useState("");
+  const [selectedSlots, setSelectedSlots] = useState([]);
+  // Créneaux horaires proposés
+  const slots = [
+    { id: 1, label: '08h00 - 09h00' },
+    { id: 2, label: '09h00 - 10h00' },
+    { id: 3, label: '10h00 - 11h00' },
+    { id: 4, label: '11h00 - 12h00' },
+    { id: 5, label: '14h00 - 15h00' },
+    { id: 6, label: '15h00 - 16h00' },
+    { id: 7, label: '16h00 - 17h00' },
+  ];
+
+  // Sélection/déselection d'un créneau
+  const handleSlotChange = (slotId) => {
+    setSelectedSlots((prev) =>
+      prev.includes(slotId)
+        ? prev.filter((id) => id !== slotId)
+        : [...prev, slotId]
+    );
+  };
 
   useEffect(() => {
     if (jardinId) {
@@ -58,6 +78,7 @@ const ReservationPage = () => {
             date_reservation,
             statut: "en_attente",
             commentaires: commentaire,
+            creneaux: selectedSlots.map((slotId) => slots.find((s) => s.id === slotId)?.label),
           }),
         }
       );
@@ -147,6 +168,22 @@ const ReservationPage = () => {
         </div>
       )}
 
+      {/* Sélection des créneaux horaires */}
+      <div className="mb-4">
+        <div className="font-semibold mb-2">Sélectionne tes créneaux horaires :</div>
+        <div className="grid grid-cols-2 gap-2">
+          {slots.map((slot) => (
+            <label key={slot.id} className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={selectedSlots.includes(slot.id)}
+                onChange={() => handleSlotChange(slot.id)}
+              />
+              <span>{slot.label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
       {/* Commentaire */}
       <div className="mb-4">
         <label className="block text-green-800 mb-1 font-semibold">
@@ -186,6 +223,7 @@ const ReservationPage = () => {
         <button
           className="mt-4 px-6 py-2 bg-pink-600 hover:bg-pink-700 text-white font-semibold rounded-full"
           onClick={handlePreReservation}
+          disabled={selectedSlots.length === 0}
         >
           Réserver
         </button>
