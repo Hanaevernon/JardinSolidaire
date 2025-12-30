@@ -18,13 +18,27 @@ const confirmationResaJardins = require("./routes/confirmation_resa_jardins");
 const validationResaJardins = require("./routes/validation_resa_jardins");
 const validationResaJardiniers = require("./routes/validation_resa_jardiniers");
 const utilisateurRoute = require("./routes/utilisateur");
+const messagerieRoutes = require("./routes/messagerie");
+
+const disponibilitesRoutes = require("./routes/disponibilites");
+const favorisRoutes = require("./routes/favoris");
+
+const notificationsRoutes = require("./routes/notifications");
+
 
 const app = express();
 const PORT = process.env.PORT || 5001;
 
 // --- Middlewares ---
-app.use(cors());
+// CORS doit être placé AVANT toutes les routes
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true,
+}));
 app.use(express.json());
+
+// --- Routes API ---
+app.use("/api/messagerie", messagerieRoutes);
 
 // --- Routes API ---
 app.use("/api/jardins", jardinsRoutes);
@@ -43,6 +57,11 @@ app.use("/api/reservations/validation/jardins", validationResaJardins);
 app.use("/api/reservations/validation/jardiniers", validationResaJardiniers);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/utilisateur", utilisateurRoute);
+
+app.use("/api/disponibilites", disponibilitesRoutes);
+app.use("/api/favoris", favorisRoutes);
+
+app.use("/api", notificationsRoutes);
 
 // --- 404 handler ---
 app.use((req, res, next) => {

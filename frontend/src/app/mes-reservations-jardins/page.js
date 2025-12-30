@@ -43,7 +43,7 @@ const MesReservationsJardinsPage = () => {
   const fetchReservations = async (userId) => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/reservations/user/${userId}`
+        `${process.env.NEXT_PUBLIC_API_URL}/reservations/utilisateur/${userId}`
       );
       const data = await response.json();
       setReservations(Array.isArray(data) ? data : []);
@@ -159,12 +159,12 @@ const MesReservationsJardinsPage = () => {
               Gérez vos réservations de jardins pour cultiver
             </p>
           </div>
-          <Link href="/jardins">
+          {/* <Link href="/jardins">
             <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg flex items-center">
               <FontAwesomeIcon icon={faSearch} className="mr-2" />
               Trouver un jardin
             </button>
-          </Link>
+          </Link> */}
         </div>
 
         {/* Statistiques */}

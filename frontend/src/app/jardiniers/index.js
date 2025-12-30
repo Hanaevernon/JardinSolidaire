@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 
 // Fonction utilitaire pour formater correctement l’URL de la photo
@@ -31,15 +32,22 @@ function getPhotoUrl(photo) {
   // ✅ Supprimer un éventuel "assets/" en début de chaîne
   p = p.replace(/^assets\//, "");
 
-  // ✅ Retourner une URL correcte
+  // ✅ Si c'est une URL externe, on la retourne telle quelle
+  if (p.startsWith('http://') || p.startsWith('https://')) {
+    return p;
+  }
+  // Sinon, on retourne l'URL locale
   return `/assets/${p}`;
 }
 
 
 export default function ListeJardiniers() {
+  const { user } = useAuth();
   const [jardiniers, setJardiniers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [favoris, setFavoris] = useState([]);
 
+  // Charger les jardiniers
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/jardiniers`)
       .then((res) => {
@@ -55,6 +63,50 @@ export default function ListeJardiniers() {
         setLoading(false);
       });
   }, []);
+
+  // Charger les favoris de l'utilisateur
+  useEffect(() => {
+    if (!user) return;
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/favoris/${user.id_utilisateur}`)
+      .then((res) => res.json())
+      .then((data) => {
+        const ids = (data || [])
+          .filter((f) => f.id_jardinier)
+          .map((f) => f.id_jardinier);
+        setFavoris(ids);
+      })
+      .catch(() => setFavoris([]));
+  }, [user]);
+
+  // Ajouter/retirer un favori
+  const toggleFavori = async (id_jardinier) => {
+    if (!user) return;
+    const isFav = favoris.includes(id_jardinier);
+    setFavoris((prev) =>
+      isFav ? prev.filter((fid) => fid !== id_jardinier) : [...prev, id_jardinier]
+    );
+    try {
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/favoris`;
+      if (isFav) {
+        await fetch(url, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id_utilisateur: user.id_utilisateur, id_jardinier }),
+        });
+      } else {
+        await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id_utilisateur: user.id_utilisateur, id_jardinier }),
+        });
+      }
+    } catch (e) {
+      // rollback UI si erreur
+      setFavoris((prev) =>
+        isFav ? [...prev, id_jardinier] : prev.filter((fid) => fid !== id_jardinier)
+      );
+    }
+  };
 
   if (loading) {
     return <p className="text-center text-gray-600 mt-20">⏳ Chargement...</p>;
@@ -75,8 +127,22 @@ export default function ListeJardiniers() {
           {jardiniers.map((jardinier) => (
             <div
               key={jardinier.id_jardinier || jardinier.id_utilisateur}
-              className="bg-white border rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition"
+              className="bg-white border rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition relative"
             >
+              {/* Bouton cœur favoris */}
+              {user && (
+                <button
+                  onClick={() => toggleFavori(jardinier.id_jardinier)}
+                  className="absolute top-3 right-3 text-2xl z-10 hover:scale-125 transition-transform"
+                  title={favoris.includes(jardinier.id_jardinier) ? "Retirer des favoris" : "Ajouter aux favoris"}
+                >
+                  {favoris.includes(jardinier.id_jardinier) ? (
+                    <span className="text-pink-500">♥</span>
+                  ) : (
+                    <span className="text-gray-400">♡</span>
+                  )}
+                </button>
+              )}
               {/* Image */}
               <img
                 src={getPhotoUrl(jardinier.photos)}

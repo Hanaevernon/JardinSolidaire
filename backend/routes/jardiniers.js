@@ -187,7 +187,9 @@ router.get("/:id", async (req, res) => {
         u.nom,
         u.note_moyenne,
         u.photo_profil,
-        u.biographie
+        u.biographie,
+        u.email,
+        u.telephone
       FROM jardiniers j
       JOIN utilisateur u ON j.id_utilisateur = u.id_utilisateur
       WHERE j.id_jardinier = $1
@@ -206,6 +208,13 @@ router.get("/:id", async (req, res) => {
       : typeof jardinier.photos === "string"
       ? JSON.parse(jardinier.photos)
       : [];
+
+    // 🔹 Ajout des disponibilités du jardinier
+    const dispoResult = await pool.query(
+      `SELECT * FROM disponibilites WHERE id_jardin = $1 ORDER BY date_dispo ASC`,
+      [jardinier.id_jardinier]
+    );
+    jardinier.disponibilites_jardinier = dispoResult.rows;
 
     res.json(jardinier);
   } catch (error) {

@@ -27,6 +27,19 @@ async function seedUtilisateur() {
   await prisma.utilisateur.createMany({
     data: [
       {
+        nom: 'Vernon',
+        prenom: 'Hanaë',
+        email: 'hanae@example.com',
+        mot_de_passe: 'testhanae',
+        role: 'ami_du_vert',
+        photo_profil: 'https://randomuser.me/api/portraits/women/44.jpg',
+        biographie: "J'adore jardiner et partager mes astuces !",
+        date_inscription: new Date(),
+        telephone: '0606060606',
+        adresse: '1 rue du Jardin, Nantes',
+        note_moyenne: 5.0,
+      },
+      {
         nom: 'Dupont',
         prenom: 'Alice',
         email: 'alice@example.com',
@@ -199,13 +212,128 @@ async function seedJardin() {
   console.log('✅ Jardins insérés avec succès !');
 };
 
+async function seedJardiniers() {
+  const alice = await prisma.utilisateur.findUnique({ where: { email: 'alice@example.com' } });
+  const emma = await prisma.utilisateur.findUnique({ where: { email: 'emma@example.com' } });
+  const chloe = await prisma.utilisateur.findUnique({ where: { email: 'chloe@example.com' } });
 
+  if (!alice || !emma || !chloe) {
+    throw new Error("Certains utilisateurs amis_du_vert n'existent pas. Vérifie les emails !");
+  }
 
+  await prisma.jardiniers.createMany({
+    data: [
+      {
+        id_utilisateur: alice.id_utilisateur,
+        titre: 'Herboriste expérimentée propose ses services',
+        description: 'Passionnée par les plantes médicinales et aromatiques, je propose mes services pour vous aider à créer votre jardin de simples. Je peux vous accompagner dans la création de tisanes maison et vous enseigner les bases de l\'herboristerie.',
+        localisation: 'Paris 15ème',
+        disponibilites: 'Weekends et mercredis après-midi',
+        competences: 'Herboristerie, plantes médicinales, tisanes, jardinage naturel',
+        photos: [
+          'https://img.freepik.com/photos-gratuite/femme-jardinant-dans-son-jardin_23-2148774916.jpg'
+        ],
+        date_creation: new Date(),
+      },
+      {
+        id_utilisateur: emma.id_utilisateur,
+        titre: 'Apprentie jardinière motivée cherche expérience',
+        description: 'Débutante mais très motivée, je souhaite apprendre en participant à vos projets de jardinage. En échange de mon aide, j\'aimerais acquérir de l\'expérience en permaculture et jardinage naturel.',
+        localisation: 'Marseille et alentours',
+        disponibilites: 'Flexible, tous les jours sauf mardi',
+        competences: 'Motivation, apprentissage rapide, jardinage débutant',
+        photos: [
+          'https://img.freepik.com/photos-gratuite/jeune-femme-plantant-dans-jardin_23-2148774921.jpg'
+        ],
+        date_creation: new Date(),
+      },
+      {
+        id_utilisateur: chloe.id_utilisateur,
+        titre: 'Spécialiste fleurs comestibles et plantes grimpantes',
+        description: 'Je me spécialise dans la culture de fleurs comestibles et l\'installation de plantes grimpantes. Je peux vous aider à embellir votre jardin tout en le rendant productif avec des fleurs que vous pourrez cuisiner.',
+        localisation: 'Toulouse centre',
+        disponibilites: 'Matinées en semaine et samedis',
+        competences: 'Fleurs comestibles, plantes grimpantes, aménagement paysager, cuisine des fleurs',
+        photos: [
+          'https://img.freepik.com/photos-gratuite/arrangement-fleurs-comestibles_23-2148774925.jpg'
+        ],
+        date_creation: new Date(),
+      },
+    ],
+  });
+
+  console.log('✅ Annonces de jardiniers insérées avec succès !');
+};
+
+// Seed pour la messagerie
+async function seedMessagerie() {
+  // On prend Alice (ami_du_vert) et Lucas (proprietaire)
+  const alice = await prisma.utilisateur.findUnique({ where: { email: 'alice@example.com' } });
+  const lucas = await prisma.utilisateur.findUnique({ where: { email: 'lucas@example.com' } });
+  const hugo = await prisma.utilisateur.findUnique({ where: { email: 'hugo@example.com' } });
+  const emma = await prisma.utilisateur.findUnique({ where: { email: 'emma@example.com' } });
+  const hanae = await prisma.utilisateur.findUnique({ where: { email: 'hanae@example.com' } });
+
+  if (!alice || !lucas || !hugo || !emma || !hanae) {
+    throw new Error("Certains utilisateurs n'existent pas pour la seed messagerie.");
+  }
+
+  await prisma.messagerie.createMany({
+    data: [
+      {
+        id_envoyeur: alice.id_utilisateur,
+        id_destinataire: lucas.id_utilisateur,
+        contenu: "Bonjour Lucas, j'aimerais jardiner dans votre jardin !",
+        date_envoi: new Date(),
+        lu: false
+      },
+      {
+        id_envoyeur: lucas.id_utilisateur,
+        id_destinataire: alice.id_utilisateur,
+        contenu: "Bonjour Alice, avec plaisir ! Quand souhaitez-vous venir ?",
+        date_envoi: new Date(),
+        lu: false
+      },
+      {
+        id_envoyeur: emma.id_utilisateur,
+        id_destinataire: hugo.id_utilisateur,
+        contenu: "Bonjour Hugo, votre potager m'intéresse beaucoup.",
+        date_envoi: new Date(),
+        lu: false
+      },
+      {
+        id_envoyeur: hugo.id_utilisateur,
+        id_destinataire: emma.id_utilisateur,
+        contenu: "Merci Emma, je peux vous faire visiter samedi prochain !",
+        date_envoi: new Date(),
+        lu: false
+      },
+      // Ajout d'un message envoyé par Hanaë à Alice
+      {
+        id_envoyeur: hanae.id_utilisateur,
+        id_destinataire: alice.id_utilisateur,
+        contenu: "Bonjour Alice, c'est Hanaë ! On peut discuter ici.",
+        date_envoi: new Date(),
+        lu: false
+      }
+    ]
+  });
+  console.log('✅ Messages de test insérés dans la messagerie !');
+}
 
 async function main() {
   console.log("👉 Lancement de main()");
 
- 
+  // Nettoyage des tables principales (ordre pour respecter les contraintes de clés étrangères)
+  await prisma.messagerie.deleteMany();
+  await prisma.reservation.deleteMany();
+  await prisma.jardiniers.deleteMany();
+  await prisma.jardin.deleteMany();
+  await prisma.utilisateurCompetence.deleteMany();
+  await prisma.competence.deleteMany();
+  await prisma.utilisateur.deleteMany();
+
+  console.log('🧹 Tables principales vidées.');
 
   await seedCompetences();
   console.log("✅ seedCompetences terminé");
@@ -216,8 +344,13 @@ async function main() {
   await seedJardin();
   console.log("✅ seedJardin terminé");
 
+  await seedJardiniers();
+  console.log("✅ seedJardiniers terminé");
+
   await seedReservation();
   console.log("✅ seedReservation terminé");
+  await seedMessagerie();
+  console.log("✅ seedMessagerie terminé");
 }
 
 main()

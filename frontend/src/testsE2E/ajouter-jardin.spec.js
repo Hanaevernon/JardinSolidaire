@@ -15,7 +15,11 @@ test.describe('Page Ajouter un Jardin', () => {
   ];
 
   test.beforeEach(async ({ page }) => {
-    // navigue sur la page 
+    // Simule un utilisateur connecté
+    await page.addInitScript(() => {
+      localStorage.setItem('user', JSON.stringify({ id_utilisateur: 1, nom: 'Testeur' }));
+    });
+    // navigue sur la page
     await page.goto('/ajouter-jardin');
   });
 
@@ -56,6 +60,7 @@ test.describe('Page Ajouter un Jardin', () => {
   test('permet de supprimer une photo via le bouton ✖', async ({ page }) => {
     // 11) On upload 3 photos
     const fileInput = page.locator('input[type="file"]');
+    await fileInput.waitFor({ state: 'visible' });
     await fileInput.setInputFiles(files.slice(0, 3));
     const thumbs = page.locator('img[alt^="Photo"]');
     await expect(thumbs).toHaveCount(3);
@@ -80,21 +85,26 @@ test.describe('Page Ajouter un Jardin', () => {
     let alertMessage = '';
     page.on('dialog', async d => { alertMessage = d.message(); await d.accept(); });
 
+    // attend que le formulaire soit chargé
+    await page.waitForSelector('form');
     // uploade deux photos
-    await page.locator('input[type="file"]').setInputFiles(files.slice(0, 2));
+    const fileInput = page.locator('input[type="file"]');
+    await fileInput.waitFor({ state: 'visible' });
+    await fileInput.setInputFiles(files.slice(0, 2));
     // remplit les champs
-    await page.fill('input[name="nom"]', 'Mon joli jardin');
+    await page.fill('input[name="titre"]', 'Mon joli jardin');
     await page.fill('textarea[name="description"]', 'Description test');
     await page.fill('input[name="adresse"]', 'Paris 11e');
-    await page.fill('input[name="surface"]', '50');
+    await page.fill('input[name="superficie"]', '50');
     await page.fill('input[name="type"]', 'arrosage');
+    await page.selectOption('select[name="region"]', { label: 'Île-de-France' });
     // soumission et attente de redirection
     await Promise.all([
       page.waitForURL('**/jardins'),
       page.click('button:has-text("Ajouter mon jardin")'),
     ]);
 
-    expect(alertMessage).toBe('Jardin ajouté !');
+    expect(alertMessage).toBe('👏 Jardin ajouté avec succès !');
     expect(page.url()).toContain('/jardins');
   });
 

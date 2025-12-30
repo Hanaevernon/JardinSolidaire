@@ -50,22 +50,21 @@ router.get("/", async (req, res) => {
 
 // ✅ Créer une réservation (jardin OU jardinier)
 router.post("/", async (req, res) => {
-  const { id_utilisateur, id_jardin, id_jardinier, date_reservation, statut, commentaires } = req.body;
+  const { id_utilisateur, id_jardin, id_jardinier, date_reservation, statut, commentaires, creneaux } = req.body;
 
   if (!id_utilisateur || (!id_jardin && !id_jardinier)) {
     return res.status(400).json({ error: "id_utilisateur + (id_jardin OU id_jardinier) requis" });
   }
 
   try {
-    // Note: Le schéma Prisma ne contient pas de champ 'id_jardinier' dans la table reservation
-    // Adaptation nécessaire selon votre logique métier
     const reservation = await prisma.reservation.create({
       data: {
         id_utilisateur: BigInt(id_utilisateur),
         id_jardin: id_jardin ? BigInt(id_jardin) : null,
         date_reservation: new Date(date_reservation),
         statut: statut || "en_attente",
-        commentaires: commentaires || null
+        commentaires: commentaires || null,
+        creneaux: creneaux ? creneaux : null
       }
     });
 
@@ -75,7 +74,8 @@ router.post("/", async (req, res) => {
       id_reservation: reservation.id_reservation.toString(),
       id_utilisateur: reservation.id_utilisateur.toString(),
       id_jardin: reservation.id_jardin?.toString() || null,
-      id_disponibilite: reservation.id_disponibilite?.toString() || null
+      id_disponibilite: reservation.id_disponibilite?.toString() || null,
+      creneaux: reservation.creneaux || []
     };
 
     res.status(201).json(reservationJSON);
@@ -168,6 +168,7 @@ router.get("/:id", async (req, res) => {
       statut: reservation.statut,
       date_reservation: reservation.date_reservation,
       commentaires: reservation.commentaires,
+      creneaux: reservation.creneaux || [],
       titre_annonce: reservation.jardin?.titre || null,
       adresse: reservation.jardin?.adresse || null,
       type: reservation.jardin?.type || null,
@@ -271,6 +272,77 @@ router.get("/proprietaire/:proprietaireId", async (req, res) => {
     res.json(reservationsJSON);
   } catch (err) {
     console.error("❌ Erreur récupération réservations propriétaire :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+
+// 🔹 GET réservations reçues par un jardinier (ami du vert)
+router.get("/jardinier/:userId", async (req, res) => {
+  const { userId } = req.params;
+  try {
+    // On récupère les annonces de jardinier créées par cet utilisateur
+    const annoncesJardinier = await prisma.jardiniers.findMany({
+      where: {
+        id_utilisateur: BigInt(userId)
+      },
+      select: {
+        id_jardinier: true,
+        titre: true,
+        localisation: true
+      }
+    });
+
+    const idsJardinier = annoncesJardinier.map(a => a.id_jardinier);
+    if (idsJardinier.length === 0) {
+      return res.json([]); // Aucun jardinier, aucune réservation reçue
+    }
+
+    // On récupère les réservations qui concernent ces annonces de jardinier
+    const reservations = await prisma.reservation.findMany({
+      where: {
+        id_jardin: null, // On suppose que les réservations sur jardinier ont id_jardin null
+        // Si vous avez un champ id_jardinier dans reservation, adaptez ici
+        // id_jardinier: { in: idsJardinier }
+      },
+      include: {
+        utilisateur: {
+          select: {
+            prenom: true,
+            nom: true,
+            email: true,
+            telephone: true
+          }
+        }
+      },
+      orderBy: {
+        date_reservation: 'desc'
+      }
+    });
+
+    // Ajout des infos de l'annonce jardinier à chaque réservation
+    const reservationsJSON = reservations.map(r => {
+      // Trouver l'annonce correspondante si possible
+      // Si vous avez un champ id_jardinier dans reservation, utilisez-le ici
+      // const annonce = annoncesJardinier.find(a => a.id_jardinier === r.id_jardinier);
+      return {
+        id_reservation: r.id_reservation.toString(),
+        id_utilisateur: r.id_utilisateur.toString(),
+        statut: r.statut,
+        date_reservation: r.date_reservation,
+        commentaires: r.commentaires,
+        client_prenom: r.utilisateur?.prenom || null,
+        client_nom: r.utilisateur?.nom || null,
+        client_email: r.utilisateur?.email || null,
+        client_telephone: r.utilisateur?.telephone || null,
+        // titre_annonce: annonce?.titre || null,
+        // localisation: annonce?.localisation || null
+      };
+    });
+
+    res.json(reservationsJSON);
+  } catch (err) {
+    console.error("❌ Erreur récupération réservations jardinier :", err);
     res.status(500).json({ error: "Erreur serveur" });
   }
 });

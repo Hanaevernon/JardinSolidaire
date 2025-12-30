@@ -1,9 +1,11 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import Slider from "react-slick";
 
 const ListeJardins = () => {
+  const { user } = useAuth();
   const [favoris, setFavoris] = useState([]);
   const [search, setSearch] = useState("");
   const [quartier, setQuartier] = useState("");
@@ -35,10 +37,49 @@ const ListeJardins = () => {
       .finally(() => setLoading(false));
   }, [search, quartier, type]);
 
-  const toggleFavori = (id) => {
+
+  // Charger les favoris de l'utilisateur
+  useEffect(() => {
+    if (!user) return;
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/favoris/${user.id_utilisateur}`)
+      .then((res) => res.json())
+      .then((data) => {
+        const ids = (data || [])
+          .filter((f) => f.id_jardin)
+          .map((f) => f.id_jardin);
+        setFavoris(ids);
+      })
+      .catch(() => setFavoris([]));
+  }, [user]);
+
+  // Ajouter/retirer un favori
+  const toggleFavori = async (id_jardin) => {
+    if (!user) return;
+    const isFav = favoris.includes(id_jardin);
     setFavoris((prev) =>
-      prev.includes(id) ? prev.filter((fid) => fid !== id) : [...prev, id]
+      isFav ? prev.filter((fid) => fid !== id_jardin) : [...prev, id_jardin]
     );
+    try {
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/favoris`;
+      if (isFav) {
+        await fetch(url, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id_utilisateur: user.id_utilisateur, id_jardin }),
+        });
+      } else {
+        await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id_utilisateur: user.id_utilisateur, id_jardin }),
+        });
+      }
+    } catch (e) {
+      // rollback UI si erreur
+      setFavoris((prev) =>
+        isFav ? [...prev, id_jardin] : prev.filter((fid) => fid !== id_jardin)
+      );
+    }
   };
 
   return (
@@ -123,14 +164,18 @@ const ListeJardins = () => {
                       slidesToShow={1}
                       slidesToScroll={1}
                     >
-                      {jardin.photos.map((photo, index) => (
-                        <img
-                          key={index}
-                          src={photo}
-                          alt={`Photo ${index + 1}`}
-                          className="h-48 w-full object-cover"
-                        />
-                      ))}
+                      {jardin.photos.map((photo, index) => {
+                        const isExternal = typeof photo === 'string' && (photo.startsWith('http://') || photo.startsWith('https://'));
+                        const imageUrl = isExternal ? photo : `/assets/${photo.replace(/^assets\//, '')}`;
+                        return (
+                          <img
+                            key={index}
+                            src={imageUrl}
+                            alt={`Photo ${index + 1}`}
+                            className="h-48 w-full object-cover"
+                          />
+                        );
+                      })}
                     </Slider>
                   ) : (
                     <img

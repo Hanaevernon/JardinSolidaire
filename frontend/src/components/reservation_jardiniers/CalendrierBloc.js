@@ -35,19 +35,54 @@ const events = [
 ]
 
 export default function CalendrierBloc() {
-  const [selectedEvent, setSelectedEvent] = useState(null)
-  const [isConnected, setIsConnected] = useState(false)
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedSlots, setSelectedSlots] = useState([]);
+  const [isConnected, setIsConnected] = useState(false);
+
+  // Exemple de créneaux horaires pour une journée
+  const slots = [
+    { id: 1, label: '08h00 - 09h00' },
+    { id: 2, label: '09h00 - 10h00' },
+    { id: 3, label: '10h00 - 11h00' },
+    { id: 4, label: '11h00 - 12h00' },
+    { id: 5, label: '14h00 - 15h00' },
+    { id: 6, label: '15h00 - 16h00' },
+    { id: 7, label: '16h00 - 17h00' },
+  ];
 
   useEffect(() => {
-    const token = localStorage.getItem('token')
-    setIsConnected(!!token)
-  }, [])
+    const token = localStorage.getItem('token');
+    setIsConnected(!!token);
+  }, []);
+
+  // Sélection de la date sur le calendrier
+  const handleSelectSlot = ({ start }) => {
+    setSelectedDate(start);
+    setSelectedSlots([]); // reset slots quand on change de date
+  };
+
+  // Sélection/déselection d'un créneau
+  const handleSlotChange = (slotId) => {
+    setSelectedSlots((prev) =>
+      prev.includes(slotId)
+        ? prev.filter((id) => id !== slotId)
+        : [...prev, slotId]
+    );
+  };
+
+  const handleReservation = () => {
+    if (!isConnected) return;
+    alert(
+      `Réservation confirmée pour la date ${selectedDate ? selectedDate.toLocaleDateString('fr-FR') : ''} et les créneaux : ` +
+      slots.filter((s) => selectedSlots.includes(s.id)).map((s) => s.label).join(', ')
+    );
+    // Ici, tu peux envoyer la réservation au backend
+  };
 
   return (
     <div className="bg-white dark:bg-zinc-800 p-6 rounded shadow-md">
-      <h2 className="text-xl font-bold text-green-700 mb-4">Créneaux disponibles</h2>
+      <h2 className="text-xl font-bold text-green-700 mb-4">Choisis une date et tes créneaux horaires</h2>
 
-      {/* Fix alignement boutons */}
       <style jsx global>{`
         .rbc-toolbar {
           display: flex;
@@ -56,7 +91,6 @@ export default function CalendrierBloc() {
           gap: 0.5rem;
           align-items: center;
         }
-
         .rbc-event {
           background-color: #e3107d !important;
           border: none;
@@ -64,7 +98,6 @@ export default function CalendrierBloc() {
           font-size: 12px;
           padding: 2px 6px;
         }
-
         .rbc-selected {
           background-color: #e3107d !important;
           opacity: 0.8;
@@ -76,7 +109,7 @@ export default function CalendrierBloc() {
         events={events}
         startAccessor="start"
         endAccessor="end"
-        style={{ height: 500 }}
+        style={{ height: 400 }}
         views={['month', 'week', 'day']}
         messages={{
           next: 'Suivant',
@@ -87,26 +120,40 @@ export default function CalendrierBloc() {
           day: 'Jour',
           agenda: 'Agenda',
         }}
-        onSelectEvent={(event) => setSelectedEvent(event)}
+        selectable
+        onSelectSlot={handleSelectSlot}
       />
 
-      {selectedEvent && (
+      {selectedDate && (
         <div className="mt-6">
           <div className="text-green-800 font-medium mb-3">
-            Créneau sélectionné : {selectedEvent.title}
+            Date sélectionnée : {selectedDate.toLocaleDateString('fr-FR')}
           </div>
-
+          <div className="mb-4">
+            <div className="font-semibold mb-2">Créneaux horaires :</div>
+            <div className="grid grid-cols-2 gap-2">
+              {slots.map((slot) => (
+                <label key={slot.id} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedSlots.includes(slot.id)}
+                    onChange={() => handleSlotChange(slot.id)}
+                  />
+                  <span>{slot.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
           <button
-            onClick={isConnected ? () => alert('Réservation confirmée') : null}
+            onClick={handleReservation}
             className={`w-full px-6 py-2 rounded-full text-white font-semibold transition duration-200 ${
               isConnected
                 ? 'bg-[#e3107d] hover:bg-pink-800'
                 : 'bg-gray-400 cursor-not-allowed'
             }`}
           >
-            Réserver ce créneau
+            Réserver les créneaux sélectionnés
           </button>
-
           {!isConnected && (
             <p className="text-sm text-gray-600 italic mt-2 text-center">
               Connecte-toi pour réserver un créneau 🌿
@@ -115,5 +162,5 @@ export default function CalendrierBloc() {
         </div>
       )}
     </div>
-  )
+  );
 }

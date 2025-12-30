@@ -87,4 +87,46 @@ router.get("/:id/competences", async (req, res) => {
   }
 });
 
+// POST ajouter une compétence à un utilisateur
+router.post("/:id/competences", async (req, res) => {
+  const { id } = req.params;
+  const { nom } = req.body;
+  if (!nom) return res.status(400).json({ error: "Nom de compétence requis" });
+  try {
+    // Vérifier si la compétence existe
+    let competence = await prisma.competence.findUnique({ where: { nom } });
+    if (!competence) {
+      competence = await prisma.competence.create({ data: { nom } });
+    }
+    // Ajouter la compétence à l'utilisateur
+    await prisma.utilisateurCompetence.create({
+      data: {
+        id_utilisateur: BigInt(id),
+        id_competence: competence.id_competence
+      }
+    });
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Erreur ajout compétence utilisateur :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// DELETE supprimer une compétence d'un utilisateur
+router.delete("/:id/competences/:id_competence", async (req, res) => {
+  const { id, id_competence } = req.params;
+  try {
+    await prisma.utilisateurCompetence.deleteMany({
+      where: {
+        id_utilisateur: BigInt(id),
+        id_competence: Number(id_competence)
+      }
+    });
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Erreur suppression compétence utilisateur :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
 module.exports = router;

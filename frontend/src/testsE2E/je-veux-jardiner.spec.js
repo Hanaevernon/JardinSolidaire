@@ -4,7 +4,12 @@ test.describe('Page “Je veux jardiner”', () => {
   const path = '/je-veux-jardiner';
 
   test.beforeEach(async ({ page }) => {
+    // Mock API si besoin
+    await page.route('**/api/jardiner', async route => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: '{"success":true}' });
+    });
     await page.goto(path);
+    await page.waitForSelector('form');
   });
 
   test('doit afficher le titre et tous les champs du formulaire', async ({ page }) => {
