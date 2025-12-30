@@ -335,7 +335,7 @@ const DemandesRecuesPage = () => {
               Aucune demande de réservation
             </h2>
             <p className="text-gray-500">
-              Vous n'avez reçu aucune demande pour vos jardins pour le moment.
+              Vous n&apos;avez reçu aucune demande pour vos jardins pour le moment.
             </p>
           </div>
         )}
