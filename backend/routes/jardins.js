@@ -69,7 +69,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.post("/", async (req, res) => {
+router.post("/", upload.array('photos'), async (req, res) => {
   try {
     console.log("📩 Body :", req.body);
     console.log("📸 Files :", req.files);
@@ -84,9 +84,11 @@ router.post("/", async (req, res) => {
       region,
     } = req.body;
 
-
-    // Les photos doivent être envoyées dans le body (tableau de chemins ou URLs)
-    const photos = req.body.photos || [];
+    // Les photos uploadées
+    let photos = [];
+    if (req.files && req.files.length > 0) {
+      photos = req.files.map(f => '/uploads/' + f.filename);
+    }
 
     const jardin = await prisma.jardin.create({
       data: {

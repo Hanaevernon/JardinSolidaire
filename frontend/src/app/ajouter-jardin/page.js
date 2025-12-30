@@ -26,7 +26,7 @@ export default function AjouterJardin() {
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
     if (photos.length + files.length > 5) {
-      alert("⚠️ Maximum 5 photos autorisées.");
+      alert("Tu ne peux ajouter que 5 photos maximum.");
       return;
     }
     setPhotos((prev) => [...prev, ...files]);

@@ -57,8 +57,6 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    // Note: Le schéma Prisma ne contient pas de champ 'id_jardinier' dans la table reservation
-    // Adaptation nécessaire selon votre logique métier
     const reservation = await prisma.reservation.create({
       data: {
         id_utilisateur: BigInt(id_utilisateur),

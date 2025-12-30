@@ -129,7 +129,7 @@ export default function JardinPage() {
           <p className="mb-2 text-green-800">
             Nom : {jardin.utilisateur?.prenom} {jardin.utilisateur?.nom}
           </p>
-          <p className="mb-2 text-green-800">✅ Statut vérifié</p>
+          <p className="mb-2 text-green-800">Statut vérifié</p>
           <button
             className="mt-4 px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded"
             onClick={() => setShowContact((v) => !v)}
@@ -138,7 +138,7 @@ export default function JardinPage() {
           </button>
           {showContact && (
             <div className="mt-3 p-3 bg-white border rounded shadow text-gray-800">
-              {jardin.utilisateur?.email || jardin.utilisateur?.telephone ? (
+              {/* {jardin.utilisateur?.email || jardin.utilisateur?.telephone ? (
                 <>
                   {jardin.utilisateur?.email && (
                     <p className="mb-1">Email : <a href={`mailto:${jardin.utilisateur.email}`} className="text-green-700 underline">{jardin.utilisateur.email}</a></p>
@@ -148,7 +148,7 @@ export default function JardinPage() {
                   )}
                   <hr className="my-2" />
                 </>
-              ) : null}
+              ) : null} */}
               <Link
                 href={`/messagerie?to=${jardin.utilisateur?.id_utilisateur}&nom=${encodeURIComponent(`${jardin.utilisateur?.prenom || ''} ${jardin.utilisateur?.nom || ''}`.trim())}`}
                 className="inline-block mt-1 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
@@ -207,12 +207,12 @@ export default function JardinPage() {
       </div>
 
       {/* Commentaires */}
-      <div>
+      {/* <div>
         <h2 className="font-bold text-lg mb-2 text-green-800">Commentaires</h2>
         <div className="bg-gray-100 p-4 rounded-xl text-sm">
           ( Zone de commentaires à venir )
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }
