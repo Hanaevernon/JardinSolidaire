@@ -151,7 +151,7 @@ const MesServicesPage = () => {
                 </div>
                 <p className="text-sm text-blue-700">
                   Avec vos compétences en jardinage, vous pouvez proposer vos services aux propriétaires 
-                  qui ont besoin d'aide pour entretenir leurs jardins. Les demandes apparaîtront ci-dessous.
+                  qui ont besoin d&apos;aide pour entretenir leurs jardins. Les demandes apparaîtront ci-dessous.
                 </p>
               </div>
             </div>
@@ -252,7 +252,7 @@ const MesServicesPage = () => {
               <h4 className="font-semibold text-gray-700 mb-2">Soyez réactif</h4>
               <p className="text-sm text-gray-600">
                 Répondez rapidement aux demandes de services pour augmenter 
-                vos chances d'être sélectionné.
+                vos chances d&apos;être sélectionné.
               </p>
             </div>
             <div>
