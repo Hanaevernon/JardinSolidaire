@@ -8,7 +8,14 @@ import MessagePanel from "./components/MessagePanel";
 
 
 
-export default function MessageriePage() {
+  return (
+    <Suspense fallback={<div>Chargement...</div>}>
+      <MessageriePageContent />
+    </Suspense>
+  );
+}
+
+function MessageriePageContent() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const [conversations, setConversations] = useState([]);
@@ -18,46 +25,7 @@ export default function MessageriePage() {
   const [loadingMsg, setLoadingMsg] = useState(false);
   const [pendingContact, setPendingContact] = useState(null); // Pour stocker le nom du contact si conversation absente
 
-  // Récupère les conversations de l'utilisateur connecté
-  useEffect(() => {
-    if (!user) return;
-    setLoadingConv(true);
-    console.log('[Messagerie] Chargement des conversations pour utilisateur', user.id_utilisateur);
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/messagerie/conversations/${user.id_utilisateur}`)
-      .then((res) => res.json())
-      .then((data) => {
-        console.log('[Messagerie] Conversations reçues:', data);
-        // Filtrer pour ne jamais afficher la conversation avec soi-même
-        const filtered = Array.isArray(data)
-          ? data.filter(c => String(c.id) !== String(user.id_utilisateur))
-          : [];
-        console.log('[Messagerie] Conversations filtrées:', filtered);
-        setConversations(filtered);
-        setLoadingConv(false);
-      })
-      .catch((err) => {
-        console.error('[Messagerie] Erreur chargement conversations:', err);
-        setConversations([]);
-        setLoadingConv(false);
-      });
-  }, [user]);
-
-  // Ouvre la discussion si paramètre 'to' dans l'URL
-  useEffect(() => {
-    const to = searchParams.get("to");
-    const nom = searchParams.get("nom");
-    console.log('[Messagerie] Paramètres URL:', { to, nom });
-    if (to) {
-      setSelectedId(to);
-      // Si la conversation n'existe pas encore, on stocke le nom du contact
-      if (nom) setPendingContact({ id: to, nom });
-    }
-  }, [searchParams]);
-
-  // Récupère les messages de la conversation sélectionnée
-  useEffect(() => {
-    if (!selectedId) return setMessages([]);
-    setLoadingMsg(true);
+  // ...existing useEffect and logic...
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/messagerie/messages/${selectedId}?userId=${user?.id_utilisateur}`)
       .then((res) => res.json())
       .then((data) => {
