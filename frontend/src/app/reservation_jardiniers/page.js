@@ -1,8 +1,7 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState, Suspense } from "react";
 
+export default function ReservationJardinierPage() {
   return (
     <Suspense fallback={<div>Chargement...</div>}>
       <ReservationJardinierPageContent />
