@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { useAuth } from "@/context/AuthContext";
 import ConversationList from "./components/ConversationList";
 import MessagePanel from "./components/MessagePanel";
