@@ -1,11 +1,20 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import ReservationEditor from "../../components/confirmation_reservation_jardins/ReservationEditor";
 import AuthButtons from "../../components/confirmation_reservation_jardins/AuthButtons";
 import GardenInfoCard from "../../components/confirmation_reservation_jardins/GardenInfoCard";
 
+
 export default function ConfirmationReservationJardinsPage() {
+  return (
+    <Suspense fallback={<div>Chargement...</div>}>
+      <ConfirmationReservationJardinsPageContent />
+    </Suspense>
+  );
+}
+
+function ConfirmationReservationJardinsPageContent() {
   const [start, setStart] = useState({ date: "", time: "" });
   const [end, setEnd] = useState({ date: "", time: "" });
   const [isAuth, setIsAuth] = useState(false);

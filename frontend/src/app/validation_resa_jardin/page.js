@@ -1,9 +1,50 @@
 "use client";
 import { useMemo } from "react";
+import { useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import GardenInfoCard from "../../components/validation_reservation_jardins/GardenInfoCard";
 
 export default function ValidationReservationJardinsPage() {
+  const params = useSearchParams();
+  const router = useRouter();
+
+  // Récup des infos query (?startDate&startTime&endDate&endTime)
+  const { startDate, startTime, endDate, endTime } = useMemo(
+    () => ({
+      startDate: params.get("startDate") || "",
+      startTime: params.get("startTime") || "",
+      endDate: params.get("endDate") || "",
+      endTime: params.get("endTime") || "",
+    }),
+    [params]
+  );
+
+  const dateLine =
+    startDate
+      ? `${startDate}${startTime ? ` à ${startTime}` : ""}${endDate ? ` au ${endDate}` : ""}${endTime ? ` – ${endTime}` : ""}`
+      : "Non spécifiée";
+
+  // Actions
+  const handleAccept = () => {
+    // TODO : appel API PATCH /reservation/:id (statut=acceptée)
+    alert("✅ Réservation acceptée !");
+    router.push("/profil");
+  };
+
+  const handleReject = () => {
+    // TODO : appel API PATCH /reservation/:id (statut=refusée)
+    alert("❌ Réservation refusée.");
+    router.push("/profil");
+  };
+
+  return (
+    <Suspense fallback={<div>Chargement...</div>}>
+      <ValidationReservationJardinsPageContent />
+    </Suspense>
+  );
+}
+
+function ValidationReservationJardinsPageContent() {
   const params = useSearchParams();
   const router = useRouter();
 
@@ -74,3 +115,4 @@ export default function ValidationReservationJardinsPage() {
     </main>
   );
 }
+
