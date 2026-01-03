@@ -3,7 +3,14 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 
-export default function ReservationJardinierPage() {
+  return (
+    <Suspense fallback={<div>Chargement...</div>}>
+      <ReservationJardinierPageContent />
+    </Suspense>
+  );
+}
+
+function ReservationJardinierPageContent() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const dateParam = searchParams.get("date");
@@ -14,50 +21,32 @@ export default function ReservationJardinierPage() {
   const [selectedSlots, setSelectedSlots] = useState([]);
   // Créneaux horaires proposés
   const slots = [
-      return (
-        <Suspense fallback={<div>Chargement...</div>}>
-          <ReservationJardinierPageContent />
-        </Suspense>
-      );
-    }
+    { id: 1, label: '08h00 - 09h00' },
+    { id: 2, label: '09h00 - 10h00' },
+    { id: 3, label: '10h00 - 11h00' },
+    { id: 4, label: '11h00 - 12h00' },
+    { id: 5, label: '14h00 - 15h00' },
+    { id: 6, label: '15h00 - 16h00' },
+    { id: 7, label: '16h00 - 17h00' },
+  ];
 
-    function ReservationJardinierPageContent() {
-      const searchParams = useSearchParams();
-      const id = searchParams.get("id");
-      const dateParam = searchParams.get("date");
+  // Sélection/déselection d'un créneau
+  const handleSlotChange = (slotId) => {
+    setSelectedSlots((prev) =>
+      prev.includes(slotId)
+        ? prev.filter((id) => id !== slotId)
+        : [...prev, slotId]
+    );
+  };
 
-      const [jardinier, setJardinier] = useState(null);
-      const [commentaire, setCommentaire] = useState("");
-      const [confirmationMessage, setConfirmationMessage] = useState("");
-      const [selectedSlots, setSelectedSlots] = useState([]);
-      // Créneaux horaires proposés
-      const slots = [
-        { id: 1, label: '08h00 - 09h00' },
-        { id: 2, label: '09h00 - 10h00' },
-        { id: 3, label: '10h00 - 11h00' },
-        { id: 4, label: '11h00 - 12h00' },
-        { id: 5, label: '14h00 - 15h00' },
-        { id: 6, label: '15h00 - 16h00' },
-        { id: 7, label: '16h00 - 17h00' },
-      ];
-
-      // Sélection/déselection d'un créneau
-      const handleSlotChange = (slotId) => {
-        setSelectedSlots((prev) =>
-          prev.includes(slotId)
-            ? prev.filter((id) => id !== slotId)
-            : [...prev, slotId]
-        );
-      };
-
-      useEffect(() => {
-        if (id) {
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/jardiniers/${id}`)
-            .then((res) => {
-              if (!res.ok) throw new Error(`HTTP ${res.status}`);
-              return res.json();
-            })
-            .then((data) => setJardinier(data))
+  useEffect(() => {
+    if (id) {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/jardiniers/${id}`)
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        })
+        .then((data) => setJardinier(data))
             .catch((err) => console.error("❌ Erreur récupération jardinier :", err));
         }
       }, [id]);
