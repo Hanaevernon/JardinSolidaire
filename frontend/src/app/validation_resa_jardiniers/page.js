@@ -1,3 +1,9 @@
+import { Suspense } from "react";
+import { useMemo } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import Header from '../../components/Navbar/Navbar';
+import Footer from '../../components/Footer/Footer';
+import GardenerInfoCard from '../../components/validation_reservation_jardiniers/GardenerInfoCard';
 
 export default function ValidationReservationJardiniersPage() {
   return (
@@ -99,4 +105,3 @@ function ValidationReservationJardiniersPageContent() {
     </div>
   )
 }
-import { Suspense } from "react";

@@ -1,5 +1,7 @@
 "use client";
 import { useMemo, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import GardenInfoCard from "../../components/validation_reservation_jardins/GardenInfoCard";
 
 export default function ValidationReservationJardinsPage() {
   return (
