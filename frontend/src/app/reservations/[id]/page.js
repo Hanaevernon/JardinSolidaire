@@ -162,7 +162,7 @@ const ReservationDetailPage = () => {
                 Ami du vert réservé
               </h3>
               <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-gray-700">Les informations du jardinier réservé ne sont pas disponibles dans cette version.<br/>Merci de contacter l'administrateur pour améliorer l'affichage.</p>
+                <p className="text-gray-700">Les informations du jardinier réservé ne sont pas disponibles dans cette version.<br/>Merci de contacter l&apos;administrateur pour améliorer l&apos;affichage.</p>
               </div>
             </div>
           ) : (

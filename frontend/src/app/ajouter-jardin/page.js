@@ -215,7 +215,7 @@ export default function AjouterJardin() {
               <option value="Nouvelle-Aquitaine">Nouvelle-Aquitaine</option>
               <option value="Occitanie">Occitanie</option>
               <option value="Pays de la Loire">Pays de la Loire</option>
-              <option value="Provence-Alpes-Côte d'Azur">Provence-Alpes-Côte d'Azur</option>
+              <option value="Provence-Alpes-Côte d&apos;Azur">Provence-Alpes-Côte d&apos;Azur</option>
               <option value="Guadeloupe">Guadeloupe</option>
               <option value="Martinique">Martinique</option>
               <option value="Guyane">Guyane</option>

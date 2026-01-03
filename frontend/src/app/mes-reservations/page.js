@@ -403,7 +403,7 @@ const MesReservationsPage = () => {
               Aucune réservation
             </h2>
             <p className="text-gray-500 mb-6">
-              Vous n'avez pas encore effectué de réservation.
+              Vous n&apos;avez pas encore effectué de réservation.
             </p>
             <Link href="/jardins">
               <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg">

@@ -1,9 +1,19 @@
 "use client";
-import { useMemo } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useMemo, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import GardenInfoCard from "../../components/validation_reservation_jardins/GardenInfoCard";
 
 export default function ValidationReservationJardinsPage() {
+  return (
+    <Suspense fallback={<div>Chargement...</div>}>
+      <ValidationReservationJardinsPageContent />
+    </Suspense>
+  );
+}
+
+// ...existing code for ValidationReservationJardinsPageContent...
+
+function ValidationReservationJardinsPageContent() {
   const params = useSearchParams();
   const router = useRouter();
 
@@ -74,3 +84,4 @@ export default function ValidationReservationJardinsPage() {
     </main>
   );
 }
+

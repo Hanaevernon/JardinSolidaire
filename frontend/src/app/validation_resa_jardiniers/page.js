@@ -1,11 +1,21 @@
-'use client'
-import { useMemo } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
-import Header from '../../components/Navbar/Navbar'
-import Footer from '../../components/Footer/Footer'
-import GardenerInfoCard from '../../components/validation_reservation_jardiniers/GardenerInfoCard'
+"use client";
+
+import { Suspense } from "react";
+import { useMemo } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import Header from '../../components/Navbar/Navbar';
+import Footer from '../../components/Footer/Footer';
+import GardenerInfoCard from '../../components/validation_reservation_jardiniers/GardenerInfoCard';
 
 export default function ValidationReservationJardiniersPage() {
+  return (
+    <Suspense fallback={<div>Chargement...</div>}>
+      <ValidationReservationJardiniersPageContent />
+    </Suspense>
+  );
+}
+
+function ValidationReservationJardiniersPageContent() {
   const params = useSearchParams()
   const router = useRouter()
 

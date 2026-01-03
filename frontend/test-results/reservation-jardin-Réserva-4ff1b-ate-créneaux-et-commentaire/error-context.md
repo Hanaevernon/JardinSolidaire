@@ -1,0 +1,72 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - link "JardinSolidaire" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - img [ref=e5]
+        - generic [ref=e7]: JardinSolidaire
+      - img [ref=e10] [cursor=pointer]
+  - main [ref=e12]:
+    - main [ref=e13]:
+      - generic [ref=e14]:
+        - heading "Demande de réservation" [level=1] [ref=e15]
+        - paragraph [ref=e16]:
+          - text: "Date sélectionnée :"
+          - strong [ref=e17]: Aucune
+          - button "Modifier la date" [ref=e18]
+        - generic [ref=e19]:
+          - generic [ref=e20]: "Sélectionne tes créneaux horaires :"
+          - generic [ref=e21]:
+            - generic [ref=e22]:
+              - checkbox "08h00 - 09h00" [ref=e23]
+              - generic [ref=e24]: 08h00 - 09h00
+            - generic [ref=e25]:
+              - checkbox "09h00 - 10h00" [ref=e26]
+              - generic [ref=e27]: 09h00 - 10h00
+            - generic [ref=e28]:
+              - checkbox "10h00 - 11h00" [ref=e29]
+              - generic [ref=e30]: 10h00 - 11h00
+            - generic [ref=e31]:
+              - checkbox "11h00 - 12h00" [ref=e32]
+              - generic [ref=e33]: 11h00 - 12h00
+            - generic [ref=e34]:
+              - checkbox "14h00 - 15h00" [ref=e35]
+              - generic [ref=e36]: 14h00 - 15h00
+            - generic [ref=e37]:
+              - checkbox "15h00 - 16h00" [ref=e38]
+              - generic [ref=e39]: 15h00 - 16h00
+            - generic [ref=e40]:
+              - checkbox "16h00 - 17h00" [ref=e41]
+              - generic [ref=e42]: 16h00 - 17h00
+        - generic [ref=e43]:
+          - generic [ref=e44]: "Commentaires :"
+          - textbox "Ajoutez un message ou une demande particulière..." [ref=e45]
+        - button "Réserver" [disabled] [ref=e46]
+  - contentinfo [ref=e47]:
+    - generic [ref=e48]:
+      - paragraph [ref=e49]: © 2025 JardinSolidaire. Tous droits réservés.
+      - generic [ref=e50]:
+        - link "Contact" [ref=e51] [cursor=pointer]:
+          - /url: /contact
+        - link "Centre d'aide" [ref=e52] [cursor=pointer]:
+          - /url: /help
+        - link "Mentions légales" [ref=e53] [cursor=pointer]:
+          - /url: /mentions-legales
+  - generic [ref=e58] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=e59]:
+      - img [ref=e60]
+    - generic [ref=e63]:
+      - button "Open issues overlay" [ref=e64]:
+        - generic [ref=e65]:
+          - generic [ref=e66]: "4"
+          - generic [ref=e67]: "5"
+        - generic [ref=e68]:
+          - text: Issue
+          - generic [ref=e69]: s
+      - button "Collapse issues badge" [ref=e70]:
+        - img [ref=e71]
+  - alert [ref=e73]
+```

@@ -45,5 +45,55 @@ describe('POST /api/reservation', () => {
     });
     expect(dbResa).not.toBeNull();
     expect(dbResa.commentaires).toBe('Test backend');
+
+  });
+
+  it('renvoie une erreur si id_utilisateur est manquant', async () => {
+    const data = {
+      id_jardin: 2,
+      date_reservation: '2025-11-25T10:00:00.000Z',
+      statut: 'en_attente',
+      commentaires: 'Test erreur utilisateur',
+      creneaux: ['08h00 - 09h00']
+    };
+    const res = await request(app)
+      .post('/api/reservation')
+      .send(data)
+      .expect(400);
+    expect(res.body).toHaveProperty('error');
+    expect(res.body.error).toMatch(/id_utilisateur/);
+  });
+
+  it('renvoie une erreur si id_jardin et id_jardinier sont manquants', async () => {
+    const data = {
+      id_utilisateur: 1,
+      date_reservation: '2025-11-25T10:00:00.000Z',
+      statut: 'en_attente',
+      commentaires: 'Test erreur jardin/jardinier',
+      creneaux: ['08h00 - 09h00']
+    };
+    const res = await request(app)
+      .post('/api/reservation')
+      .send(data)
+      .expect(400);
+    expect(res.body).toHaveProperty('error');
+    expect(res.body.error).toMatch(/id_jardin OU id_jardinier/);
+  });
+
+  it('renvoie une erreur serveur si la date est invalide', async () => {
+    const data = {
+      id_utilisateur: 1,
+      id_jardin: 2,
+      date_reservation: 'date-invalide',
+      statut: 'en_attente',
+      commentaires: 'Test erreur date',
+      creneaux: ['08h00 - 09h00']
+    };
+    const res = await request(app)
+      .post('/api/reservation')
+      .send(data)
+      .expect(500);
+    expect(res.body).toHaveProperty('error');
+    expect(res.body.error).toMatch(/création/);
   });
 });

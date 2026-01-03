@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Header from '../../components/Navbar/Navbar'
 import Footer from '../../components/Footer/Footer'
@@ -8,6 +8,14 @@ import AuthButtons from '../../components/confirmation_reservation_jardiniers/Au
 import GardenerInfoCard from '../../components/confirmation_reservation_jardiniers/GardenerInfoCard'
 
 export default function ReservationPage() {
+  return (
+    <Suspense fallback={<div>Chargement...</div>}>
+      <ReservationPageContent />
+    </Suspense>
+  );
+}
+
+function ReservationPageContent() {
   const [start, setStart] = useState({ date: '', time: '' })
   const [end,   setEnd]   = useState({ date: '', time: '' })
   const [isAuth, setIsAuth] = useState(false)

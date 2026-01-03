@@ -1,8 +1,16 @@
+
 "use client";
-import { useMemo, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { Suspense } from "react";
 
 export default function AnnulationReservationJardinsPage() {
+  return (
+    <Suspense fallback={<div>Chargement...</div>}>
+      <AnnulationReservationJardinsPageContent />
+    </Suspense>
+  );
+}
+
+function AnnulationReservationJardinsPageContent() {
   const params = useSearchParams();
   const router = useRouter();
 

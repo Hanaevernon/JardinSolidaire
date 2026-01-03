@@ -424,7 +424,7 @@ const MesReservationsJardinsPage = () => {
               Aucune réservation de jardin
             </h2>
             <p className="text-gray-500 mb-6">
-              Vous n'avez pas encore réservé de jardin pour cultiver.
+              Vous n&apos;avez pas encore réservé de jardin pour cultiver.
             </p>
             <Link href="/jardins">
               <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg">
